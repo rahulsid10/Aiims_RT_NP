@@ -1,0 +1,3119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OncoFlow - Radiation Oncology Clinical Portal</title>
+    <style>
+        /* Modern Pastel Teal-Blue Aesthetic Variables */
+        :root {
+            --bg-main: #f0f6f6;
+            --bg-sidebar: #ffffff;
+            --bg-card: #ffffff;
+            --bg-input: #f8fafc;
+            --accent-teal: #0d9488;
+            --accent-teal-hover: #0f766e;
+            --accent-teal-glow: rgba(13, 148, 136, 0.15);
+            --accent-cyan: #0284c7;
+            --accent-cyan-glow: rgba(2, 132, 199, 0.2);
+            --border-color: #ccf5f1;
+            --border-focus: #14b8a6;
+            --text-primary: #1e293b;
+            --text-secondary: #475569;
+            --text-muted: #64748b;
+            --success: #0f766e;
+            --success-bg: #e6fcf5;
+            --warning: #c2410c;
+            --warning-bg: #ffedd5;
+            --danger: #b91c1c;
+            --danger-bg: #fee2e2;
+            
+            /* Status badges soft pastels */
+            --badge-sim-bg: #ffedd5;
+            --badge-sim-fg: #c2410c;
+            --badge-contour-bg: #f3e8ff;
+            --badge-contour-fg: #7e22ce;
+            --badge-planning-bg: #e0f2fe;
+            --badge-planning-fg: #0369a1;
+            --badge-qa-bg: #fef9c3;
+            --badge-qa-fg: #a16207;
+            --badge-treating-bg: #ccfbf1;
+            --badge-treating-fg: #0f766e;
+            --badge-completed-bg: #d1fae5;
+            --badge-completed-fg: #047857;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Outfit', 'Inter', -apple-system, sans-serif;
+            scrollbar-width: thin;
+            scrollbar-color: var(--accent-teal) var(--bg-main);
+        }
+
+        body {
+            background-color: var(--bg-main);
+            color: var(--text-primary);
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* Sidebar Styling */
+        .sidebar {
+            width: 320px;
+            background-color: var(--bg-sidebar);
+            border-right: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            padding: 24px;
+            height: 100%;
+            box-shadow: 4px 0 20px rgba(13, 148, 136, 0.02);
+        }
+
+        .sidebar-header {
+            margin-bottom: 24px;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 12px;
+        }
+
+        .sidebar-title {
+            font-size: 1.35rem;
+            font-weight: 700;
+            color: var(--accent-teal);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 4px;
+        }
+
+        .sidebar-title svg {
+            width: 24px;
+            height: 24px;
+            fill: currentColor;
+        }
+
+        .sidebar-subtitle {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            font-weight: 600;
+        }
+
+        .search-box {
+            position: relative;
+            margin-bottom: 16px;
+        }
+
+        .search-input {
+            width: 100%;
+            background-color: var(--bg-input);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 12px 12px 12px 38px;
+            color: var(--text-primary);
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+        }
+
+        .search-input:focus {
+            outline: none;
+            background-color: #ffffff;
+            border-color: var(--border-focus);
+            box-shadow: 0 0 10px var(--accent-teal-glow);
+        }
+
+        .search-icon {
+            position: absolute;
+            left: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            fill: var(--text-muted);
+            width: 18px;
+            height: 18px;
+        }
+
+        .filter-group {
+            margin-bottom: 20px;
+        }
+
+        .filter-label {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+            display: block;
+            font-weight: 600;
+        }
+
+        .filter-select {
+            width: 100%;
+            background-color: var(--bg-input);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 10px 12px;
+            color: var(--text-primary);
+            font-size: 0.85rem;
+            outline: none;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .filter-select:focus {
+            border-color: var(--border-focus);
+        }
+
+        .patient-list {
+            flex-grow: 1;
+            overflow-y: auto;
+            margin-bottom: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .patient-card {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 14px;
+            cursor: pointer;
+            transition: all 0.25s ease;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(13, 148, 136, 0.02);
+        }
+
+        .patient-card::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 4px;
+            background-color: transparent;
+            transition: background-color 0.2s ease;
+        }
+
+        .patient-card.active::before {
+            background-color: var(--accent-teal);
+        }
+
+        .patient-card:hover {
+            transform: translateY(-2px);
+            border-color: var(--border-focus);
+            box-shadow: 0 4px 12px rgba(13, 148, 136, 0.08);
+            background-color: #fafdfd;
+        }
+
+        .patient-card.active {
+            background-color: rgba(13, 148, 136, 0.03);
+            border-color: var(--accent-teal);
+            box-shadow: 0 4px 12px rgba(13, 148, 136, 0.06);
+        }
+
+        .patient-card-name {
+            font-size: 0.98rem;
+            font-weight: 700;
+            margin-bottom: 6px;
+            color: var(--text-primary);
+        }
+
+        .patient-card-meta {
+            font-size: 0.78rem;
+            color: var(--text-secondary);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .status-badge {
+            font-size: 0.72rem;
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.02em;
+            display: inline-block;
+        }
+
+        .status-sim { background-color: var(--badge-sim-bg); color: var(--badge-sim-fg); }
+        .status-contour { background-color: var(--badge-contour-bg); color: var(--badge-contour-fg); }
+        .status-planning { background-color: var(--badge-planning-bg); color: var(--badge-planning-fg); }
+        .status-qa { background-color: var(--badge-qa-bg); color: var(--badge-qa-fg); }
+        .status-treating { background-color: var(--badge-treating-bg); color: var(--badge-treating-fg); }
+        .status-completed { background-color: var(--badge-completed-bg); color: var(--badge-completed-fg); }
+
+        .btn {
+            background-color: var(--accent-teal);
+            color: #ffffff;
+            border: none;
+            border-radius: 10px;
+            padding: 12px 18px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            box-shadow: 0 4px 10px rgba(13, 148, 136, 0.1);
+        }
+
+        .btn:hover {
+            background-color: var(--accent-teal-hover);
+            box-shadow: 0 4px 12px rgba(13, 148, 136, 0.2);
+            transform: translateY(-1px);
+        }
+
+        .btn-secondary {
+            background-color: #ffffff;
+            color: var(--text-secondary);
+            border: 1px solid var(--border-color);
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.02);
+        }
+
+        .btn-secondary:hover {
+            background-color: var(--bg-input);
+            color: var(--text-primary);
+            border-color: var(--border-focus);
+            box-shadow: none;
+            transform: none;
+        }
+
+        .btn-danger {
+            background-color: var(--danger-bg);
+            color: var(--danger);
+            border: 1px solid rgba(185, 28, 28, 0.15);
+            box-shadow: none;
+        }
+        .btn-danger:hover {
+            background-color: var(--danger);
+            color: #ffffff;
+            box-shadow: 0 4px 10px rgba(185, 28, 28, 0.15);
+        }
+
+        /* Main Content Container */
+        .main-content {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            overflow: hidden;
+        }
+
+        /* Header Layout */
+        .app-header {
+            background-color: #ffffff;
+            border-bottom: 1px solid var(--border-color);
+            padding: 16px 32px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.01);
+        }
+
+        .active-patient-summary {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .active-patient-title {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .active-patient-name {
+            font-size: 1.45rem;
+            font-weight: 800;
+            color: var(--text-primary);
+        }
+
+        .active-patient-meta {
+            font-size: 0.86rem;
+            color: var(--text-secondary);
+            display: flex;
+            gap: 18px;
+        }
+
+        .active-patient-meta span strong {
+            color: var(--text-primary);
+            font-weight: 600;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        /* Cloud and Role indicator badges styling */
+        .cloud-badge {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.82rem;
+            padding: 8px 14px;
+            border-radius: 10px;
+            cursor: pointer;
+            border: 1px solid var(--border-color);
+            background-color: var(--bg-input);
+            font-weight: 600;
+            transition: all 0.2s ease;
+        }
+
+        .cloud-badge:hover {
+            border-color: var(--border-focus);
+            background-color: #ffffff;
+        }
+
+        .cloud-badge svg {
+            width: 18px;
+            height: 18px;
+        }
+
+        .cloud-local { color: var(--text-secondary); }
+        .cloud-connected { color: var(--success); border-color: rgba(13, 148, 136, 0.3); background-color: var(--success-bg); }
+        .cloud-connecting { color: var(--warning); border-color: rgba(194, 65, 12, 0.3); background-color: var(--warning-bg); }
+        .cloud-error { color: var(--danger); border-color: rgba(185, 28, 28, 0.3); background-color: var(--danger-bg); }
+
+        /* Tabs Navigation */
+        .tabs-nav {
+            background-color: #ffffff;
+            display: flex;
+            border-bottom: 1px solid var(--border-color);
+            padding: 0 32px;
+        }
+
+        .tab-btn {
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            padding: 18px 22px;
+            font-size: 0.92rem;
+            font-weight: 700;
+            cursor: pointer;
+            border-bottom: 3px solid transparent;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .tab-btn svg {
+            width: 18px;
+            height: 18px;
+            fill: currentColor;
+        }
+
+        .tab-btn:hover {
+            color: var(--text-primary);
+        }
+
+        .tab-btn.active {
+            color: var(--accent-teal);
+            border-bottom-color: var(--accent-teal);
+        }
+
+        /* Scrollable Work Area */
+        .work-area {
+            flex-grow: 1;
+            padding: 32px;
+            overflow-y: auto;
+            background-color: var(--bg-main);
+        }
+
+        .tab-content {
+            display: none;
+            animation: fadeIn 0.25s ease;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(4px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Glass Cards */
+        .glass-card {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 14px;
+            padding: 24px;
+            margin-bottom: 24px;
+            box-shadow: 0 4px 18px rgba(13, 148, 136, 0.02);
+        }
+
+        .card-title {
+            font-size: 1.12rem;
+            font-weight: 700;
+            margin-bottom: 20px;
+            color: var(--accent-teal);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 10px;
+        }
+
+        .card-title svg {
+            width: 22px;
+            height: 22px;
+            fill: currentColor;
+        }
+
+        /* Form Layouts */
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 20px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .form-group.full-width {
+            grid-column: 1 / -1;
+        }
+
+        label {
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: var(--text-secondary);
+        }
+
+        input[type="text"],
+        input[type="number"],
+        select,
+        textarea {
+            background-color: var(--bg-input);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 10px 14px;
+            color: var(--text-primary);
+            font-size: 0.9rem;
+            outline: none;
+            transition: all 0.3s ease;
+        }
+
+        input:focus,
+        select:focus,
+        textarea:focus {
+            background-color: #ffffff;
+            border-color: var(--border-focus);
+            box-shadow: 0 0 10px var(--accent-teal-glow);
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        /* Checkbox list styling */
+        .checkbox-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 12px;
+            margin-top: 10px;
+        }
+
+        .checkbox-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background-color: #fcfefe;
+            border: 1px solid var(--border-color);
+            padding: 12px 14px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-size: 0.88rem;
+            font-weight: 600;
+        }
+
+        .checkbox-item:hover {
+            background-color: var(--bg-main);
+            border-color: var(--border-focus);
+        }
+
+        .checkbox-item input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            accent-color: var(--accent-teal);
+            cursor: pointer;
+        }
+
+        /* Lab values index board & Sparklines */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .stat-box {
+            background-color: var(--bg-main);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 16px;
+            text-align: center;
+            box-shadow: inset 0 2px 4px rgba(13, 148, 136, 0.01);
+        }
+
+        .stat-value {
+            font-size: 1.45rem;
+            font-weight: 800;
+            color: var(--accent-teal);
+            margin-bottom: 5px;
+        }
+
+        .stat-label {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+
+        /* Lab values pre/post comparative table */
+        .comparison-table-wrapper {
+            width: 100%;
+            overflow-x: auto;
+            margin-top: 15px;
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+        }
+
+        .comparison-table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+            font-size: 0.88rem;
+            background-color: #ffffff;
+        }
+
+        .comparison-table th, 
+        .comparison-table td {
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--border-color);
+            vertical-align: middle;
+        }
+
+        .comparison-table th {
+            background-color: #fafdfd;
+            font-weight: 700;
+            color: var(--text-secondary);
+        }
+
+        .comparison-table td input[type="number"] {
+            width: 100%;
+            padding: 6px 10px;
+            border-radius: 6px;
+            font-size: 0.85rem;
+        }
+
+        .comparison-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .trend-badge {
+            font-size: 0.75rem;
+            font-weight: 700;
+            padding: 2px 6px;
+            border-radius: 4px;
+            text-align: center;
+            display: inline-block;
+        }
+
+        .trend-up { background-color: var(--danger-bg); color: var(--danger); }
+        .trend-down { background-color: var(--success-bg); color: var(--success); }
+        .trend-stable { background-color: var(--bg-main); color: var(--text-muted); }
+
+        /* Fraction Grid & Calendar */
+        .fraction-grid-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(40px, 1fr));
+            gap: 8px;
+            margin-top: 15px;
+            margin-bottom: 20px;
+        }
+
+        .fraction-cell {
+            aspect-ratio: 1;
+            background-color: var(--bg-input);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            position: relative;
+        }
+
+        .fraction-cell:hover {
+            border-color: var(--border-focus);
+            background-color: rgba(13, 148, 136, 0.05);
+            transform: scale(1.05);
+        }
+
+        .fraction-cell.delivered {
+            background-color: var(--accent-teal);
+            color: #ffffff;
+            border-color: var(--accent-teal);
+            box-shadow: 0 2px 6px rgba(13, 148, 136, 0.2);
+        }
+
+        .fraction-tracker {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            margin-bottom: 15px;
+        }
+
+        .fraction-counter {
+            font-size: 2.2rem;
+            font-weight: 800;
+            color: var(--accent-teal);
+            min-width: 120px;
+            text-align: center;
+        }
+
+        .progress-bar-container {
+            width: 100%;
+            height: 12px;
+            background-color: var(--bg-input);
+            border-radius: 6px;
+            overflow: hidden;
+            border: 1px solid var(--border-color);
+        }
+
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(to right, var(--accent-teal), var(--accent-cyan));
+            width: 0%;
+            transition: width 0.4s ease;
+        }
+
+        /* Clinical Reference tables for OAR constraints */
+        .oar-constraint-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.85rem;
+            margin-top: 15px;
+        }
+
+        .oar-constraint-table th, 
+        .oar-constraint-table td {
+            padding: 10px 14px;
+            border-bottom: 1px solid var(--border-color);
+            text-align: left;
+        }
+
+        .oar-constraint-table th {
+            font-weight: 700;
+            color: var(--text-secondary);
+            background-color: #fafdfd;
+        }
+
+        /* Empty State Layout */
+        .empty-state {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            color: var(--text-muted);
+            text-align: center;
+            padding: 40px;
+        }
+
+        .empty-state svg {
+            width: 64px;
+            height: 64px;
+            fill: currentColor;
+            margin-bottom: 15px;
+            opacity: 0.4;
+        }
+
+        /* Modals & Overlays */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-color: rgba(11, 15, 25, 0.4);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            backdrop-filter: blur(4px);
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        .modal {
+            background-color: #ffffff;
+            border: 1px solid var(--border-color);
+            border-radius: 14px;
+            width: 90%;
+            max-width: 480px;
+            padding: 28px;
+            box-shadow: 0 10px 30px rgba(13, 148, 136, 0.08);
+            animation: modalScale 0.25s ease;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        @keyframes modalScale {
+            from { transform: scale(0.95); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+
+        .modal-header {
+            font-size: 1.25rem;
+            font-weight: 700;
+            margin-bottom: 20px;
+            color: var(--accent-teal);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .modal-buttons {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            margin-top: 24px;
+        }
+
+        /* Tooltip style */
+        .tooltip-text {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            margin-top: 4px;
+            font-style: italic;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- SIDEBAR: PATIENT REGISTRY -->
+    <div class="sidebar">
+        <div class="sidebar-header">
+            <h1 class="sidebar-title">
+                <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-2 10h-4v4h-2v-4H7v-2h4V7h2v4h4v2z"/></svg>
+                OncoFlow
+            </h1>
+            <div class="sidebar-subtitle">AIIMS Radiation Oncology</div>
+        </div>
+
+        <div class="search-box">
+            <svg class="search-icon" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
+            <input type="text" id="searchBar" class="search-input" placeholder="Search CR No / Name..." oninput="filterPatients()">
+        </div>
+
+        <div class="filter-group">
+            <label class="filter-label">Workflow Stage Filter</label>
+            <select id="stageFilter" class="filter-select" onchange="filterPatients()">
+                <option value="all">Show All Stages</option>
+                <option value="Simulation">CT Simulation</option>
+                <option value="Contouring">Contouring</option>
+                <option value="Planning">Treatment Planning (TPS)</option>
+                <option value="QA">Patient QA</option>
+                <option value="Treating">Treating</option>
+                <option value="Completed">Completed</option>
+            </select>
+        </div>
+
+        <div class="patient-list" id="patientListContainer">
+            <!-- Rendered by JS -->
+        </div>
+
+        <button class="btn" style="margin-bottom: 8px;" onclick="openAddPatientModal()">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
+            Register Patient
+        </button>
+    </div>
+
+    <!-- MAIN APP WORK AREA -->
+    <div class="main-content">
+        <!-- HEADER -->
+        <div class="app-header">
+            <div class="active-patient-summary" id="activePatientSummary">
+                <div class="empty-state" style="padding:0; align-items:flex-start;">
+                    <h2>No Patient Selected</h2>
+                </div>
+            </div>
+            <div class="header-actions">
+                <!-- Administrative Lock Settings -->
+                <div class="cloud-badge cloud-local" id="roleIndicator" onclick="toggleRoleMode()">
+                    <svg id="roleLockIcon" viewBox="0 0 24 24" fill="currentColor" style="width: 18px; height: 18px;"><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/></svg>
+                    <span id="roleLabel">Standard Access</span>
+                </div>
+                
+                <!-- Real-time Cloud Status Indicator & Config Button -->
+                <div class="cloud-badge cloud-local" id="cloudIndicator" onclick="openCloudModal()">
+                    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM19 18H6c-2.21 0-4-1.79-4-4 0-2.05 1.53-3.76 3.56-3.97l1.07-.11.5-.95C8.08 7.14 9.94 6 12 6c2.62 0 4.88 1.86 5.39 4.43l.3 1.5 1.53.11c1.56.1 2.78 1.41 2.78 2.96 0 1.65-1.35 3-3 3z"/></svg>
+                    <span id="cloudLabel">Local Storage</span>
+                </div>
+                <button class="btn btn-secondary" id="printChartBtn" style="display:none;" onclick="window.print()">
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M19 8H5c-1.66 0-3 1.34-3 3v6h4v4h12v-4h4v-6c0-1.66-1.34-3-3-3zm-3 11H8v-5h8v5zm3-7c-.55 0-1-.45-1-1s.45-1 1-1 1 .45 1 1-.45 1-1 1zm-1-9H6v4h12V3z"/></svg>
+                    Print Chart / PDF
+                </button>
+                <button class="btn btn-danger" style="display:none;" id="deletePatientBtn" onclick="deleteActivePatient()">Delete Patient</button>
+            </div>
+        </div>
+
+        <!-- TABS NAV -->
+        <div class="tabs-nav" id="tabsNav" style="display:none;">
+            <button class="tab-btn active" onclick="switchTab('tab-workup')">
+                <svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-2 15H7v-2h10v2zm0-4H7v-2h10v2zm0-4H7V8h10v2z"/></svg>
+                Clinical Workup
+            </button>
+            <button class="tab-btn" onclick="switchTab('tab-sim')">
+                <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 17h-2v-2h2v2zm2.07-7.75l-.9.92C13.45 12.9 13 13.5 13 15h-2v-.5c0-1.1.45-2.1 1.17-2.83l1.24-1.26c.37-.36.59-.86.59-1.41 0-1.1-.9-2-2-2s-2 .9-2 2H7c0-2.76 2.24-5 5-5s5 2.24 5 5c0 1.04-.42 1.99-1.07 2.75z"/></svg>
+                CT Simulation
+            </button>
+            <button class="tab-btn" onclick="switchTab('tab-contour')">
+                <svg viewBox="0 0 24 24"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>
+                Contouring
+            </button>
+            <button class="tab-btn" onclick="switchTab('tab-tps')">
+                <svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-2 10h-4v4h-2v-4H7v-2h4V7h2v4h4v2z"/></svg>
+                TPS & QA
+            </button>
+            <button class="tab-btn" onclick="switchTab('tab-treating')">
+                <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 14.5v-9l6 4.5-6 4.5z"/></svg>
+                Treatment & Review
+            </button>
+            <button class="tab-btn" onclick="switchTab('tab-settings')">
+                <svg viewBox="0 0 24 24"><path d="M19.43 12.98c.04-.32.07-.64.07-.98s-.03-.66-.07-.98l2.11-1.65c.19-.15.24-.42.12-.64l-2-3.46c-.12-.22-.39-.3-.61-.22l-2.49 1c-.52-.4-1.08-.73-1.69-.98l-.38-2.65C14.46 2.18 14.25 2 14 2h-4c-.25 0-.46.18-.49.42l-.38 2.65c-.61.25-1.17.59-1.69.98l-2.49-1c-.23-.09-.49 0-.61.22l-2 3.46c-.13.22-.07.49.12.64l2.11 1.65c-.04.32-.07.65-.07.98s.03.66.07.98l-2.11 1.65c-.19.15-.24.42-.12.64l2 3.46c.12.22.39.3.61.22l2.49-1c.52.4 1.08.73 1.69.98l.38 2.65c.03.24.24.42.49.42h4c.25 0 .46-.18.49-.42l.38-2.65c.61-.25 1.17-.59 1.69-.98l2.49 1c.23.09.49 0 .61-.22l2-3.46c.12-.22.07-.49-.12-.64l-2.11-1.65zM12 15.5c-1.93 0-3.5-1.57-3.5-3.5s1.57-3.5 3.5-3.5 3.5 1.57 3.5 3.5-1.57 3.5-3.5 3.5z"/></svg>
+                Settings
+            </button>
+        </div>
+
+        <!-- MAIN SCROLLABLE DISPLAY -->
+        <div class="work-area" id="workArea">
+            
+            <!-- EXCLUSIVE PRINT HEADER (Hidden on Screen) -->
+            <div id="printDossierHeader">
+                <div style="font-size: 1.6rem; font-weight: 800; color: #0d9488;">AIIMS RADIATION ONCOLOGY CHART</div>
+                <div style="font-size: 0.8rem; color: #64748b; margin-top: 4px; text-transform: uppercase;">Comprehensive Clinical Patient Record & Treatment Dossier</div>
+                <div class="print-patient-info" id="printPatientInfoBlock">
+                    <!-- Rendered dynamically during print event -->
+                </div>
+            </div>
+
+            <div id="noPatientState" class="empty-state">
+                <svg viewBox="0 0 24 24"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5s-3 1.34-3 3 1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg>
+                <h2>No Patient File Open</h2>
+                <p style="margin-top: 8px;">Select a patient from the registry sidebar or click "Register Patient" to configure a clinical profile.</p>
+            </div>
+
+            <!-- TAB: CLINICAL WORKUP -->
+            <div class="tab-content" id="tab-workup">
+                <div class="glass-card">
+                    <h2 class="card-title">
+                        <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>
+                        Clinical Details & Diagnosis
+                    </h2>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>CR Number</label>
+                            <input type="text" id="pt_cr" oninput="saveCurrentData()">
+                        </div>
+                        <div class="form-group">
+                            <label>Name</label>
+                            <input type="text" id="pt_name" oninput="saveCurrentData()">
+                        </div>
+                        <div class="form-group">
+                            <label>Age</label>
+                            <input type="number" id="pt_age" oninput="saveCurrentData()">
+                        </div>
+                        <div class="form-group">
+                            <label>Gender</label>
+                            <select id="pt_gender" onchange="saveCurrentData()">
+                                <option value="Female">Female</option>
+                                <option value="Male">Male</option>
+                                <option value="Other">Other</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Performance Status (ECOG)</label>
+                            <select id="pt_ecog" onchange="saveCurrentData()">
+                                <option value="0">ECOG 0 - Fully Active</option>
+                                <option value="1">ECOG 1 - Restricted Strenuous Activity</option>
+                                <option value="2">ECOG 2 - Ambulatory, Self-care, Up >50%</option>
+                                <option value="3">ECOG 3 - Limited Self-care, Confined to Bed/Chair >50%</option>
+                                <option value="4">ECOG 4 - Completely Disabled</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Primary Diagnosis Site</label>
+                            <select id="pt_site" onchange="onSiteChange(); saveCurrentData();">
+                                <option value="Head & Neck">Head & Neck</option>
+                                <option value="Central Nervous System (CNS)">Central Nervous System (CNS)</option>
+                                <option value="Breast">Breast</option>
+                                <option value="Thoracic (Lung/Esophagus)">Thoracic (Lung/Esophagus)</option>
+                                <option value="Gastrointestinal (GI)">Gastrointestinal (GI)</option>
+                                <option value="Gynecological">Gynecological (Cervix/Endometrium)</option>
+                                <option value="Genitourinary (Prostate/Bladder)">Genitourinary (Prostate/Bladder)</option>
+                                <option value="Hematological / Lymphoma">Hematological / Lymphoma</option>
+                                <option value="Skin / Musculoskeletal">Skin / Musculoskeletal (Sarcoma)</option>
+                                <option value="Palliative / Metastatic">Palliative / Metastatic (Symptom Control)</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>T Staging (TNM)</label>
+                            <select id="pt_stage_t" onchange="saveCurrentData()">
+                                <option value="Tx">Tx</option>
+                                <option value="T1">T1</option>
+                                <option value="T2">T2</option>
+                                <option value="T3">T3</option>
+                                <option value="T4">T4</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>N Staging (TNM)</label>
+                            <select id="pt_stage_n" onchange="saveCurrentData()">
+                                <option value="Nx">Nx</option>
+                                <option value="N0">N0</option>
+                                <option value="N1">N1</option>
+                                <option value="N2">N2</option>
+                                <option value="N3">N3</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>M Staging (TNM)</label>
+                            <select id="pt_stage_m" onchange="saveCurrentData()">
+                                <option value="M0">M0 - No distant metastasis</option>
+                                <option value="M1">M1 - Distant metastasis present</option>
+                            </select>
+                        </div>
+                        <div class="form-group full-width">
+                            <label>Clinical History & Histopathology</label>
+                            <textarea id="pt_history" oninput="saveCurrentData()" placeholder="Enter HPE biopsy findings, receptor profiles, and clinical notes..."></textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="glass-card">
+                    <h2 class="card-title">
+                        <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-2 10h-4v4h-2v-4H7v-2h4V7h2v4h4v2z"/></svg>
+                        Comparative Hematological Trends (Baseline vs Post-Treatment)
+                    </h2>
+                    
+                    <div class="comparison-table-wrapper">
+                        <table class="comparison-table">
+                            <thead>
+                                <tr>
+                                    <th>Biomarker / Blood Metric</th>
+                                    <th style="width: 25%;">Baseline (Pre-RT)</th>
+                                    <th style="width: 25%;">Post-Treatment</th>
+                                    <th style="width: 20%; text-align: center;">Clinical Trend</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><strong>Hemoglobin (Hb, g/dL)</strong></td>
+                                    <td><input type="number" step="0.01" id="lab_hb" oninput="saveCurrentData()"></td>
+                                    <td><input type="number" step="0.01" id="lab_hb_post" oninput="saveCurrentData()"></td>
+                                    <td style="text-align: center;"><span id="trend_hb" class="trend-badge trend-stable">Stable</span></td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Total Leucocyte Count (TLC, x10³/µL)</strong></td>
+                                    <td><input type="number" step="0.01" id="lab_wbc" oninput="saveCurrentData()"></td>
+                                    <td><input type="number" step="0.01" id="lab_wbc_post" oninput="saveCurrentData()"></td>
+                                    <td style="text-align: center;"><span id="trend_wbc" class="trend-badge trend-stable">Stable</span></td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Platelets (PLT, x10³/µL)</strong></td>
+                                    <td><input type="number" id="lab_plt" oninput="calculateInflammatoryIndices(); saveCurrentData();"></td>
+                                    <td><input type="number" id="lab_plt_post" oninput="calculateInflammatoryIndices(); saveCurrentData();"></td>
+                                    <td style="text-align: center;"><span id="trend_plt" class="trend-badge trend-stable">Stable</span></td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Absolute Neutrophil Count (ANC, /µL)</strong></td>
+                                    <td><input type="number" id="lab_anc" oninput="calculateInflammatoryIndices(); saveCurrentData();"></td>
+                                    <td><input type="number" id="lab_anc_post" oninput="calculateInflammatoryIndices(); saveCurrentData();"></td>
+                                    <td style="text-align: center;"><span id="trend_anc" class="trend-badge trend-stable">Stable</span></td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Absolute Lymphocyte Count (ALC, /µL)</strong></td>
+                                    <td><input type="number" id="lab_alc" oninput="calculateInflammatoryIndices(); saveCurrentData();"></td>
+                                    <td><input type="number" id="lab_alc_post" oninput="calculateInflammatoryIndices(); saveCurrentData();"></td>
+                                    <td style="text-align: center;"><span id="trend_alc" class="trend-badge trend-stable">Stable</span></td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Absolute Monocyte Count (AMC, /µL)</strong></td>
+                                    <td><input type="number" id="lab_amc" oninput="calculateInflammatoryIndices(); saveCurrentData();"></td>
+                                    <td><input type="number" id="lab_amc_post" oninput="calculateInflammatoryIndices(); saveCurrentData();"></td>
+                                    <td style="text-align: center;"><span id="trend_amc" class="trend-badge trend-stable">Stable</span></td>
+                                </tr>
+                                <tr>
+                                    <td><strong>C-Reactive Protein (CRP, mg/L)</strong></td>
+                                    <td><input type="number" step="0.1" id="lab_crp" oninput="saveCurrentData()"></td>
+                                    <td><input type="number" step="0.1" id="lab_crp_post" oninput="saveCurrentData()"></td>
+                                    <td style="text-align: center;"><span id="trend_crp" class="trend-badge trend-stable">Stable</span></td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Serum LDH (U/L)</strong></td>
+                                    <td><input type="number" id="lab_ldh" oninput="saveCurrentData()"></td>
+                                    <td><input type="number" id="lab_ldh_post" oninput="saveCurrentData()"></td>
+                                    <td style="text-align: center;"><span id="trend_ldh" class="trend-badge trend-stable">Stable</span></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Calculated Inflammatory Indices Grid for both states -->
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-top:20px; font-weight:700; color:var(--accent-teal); font-size:0.95rem;">
+                        Systemic Inflammatory Index Calculations
+                    </div>
+                    <div class="stats-grid" id="inflammatoryIndicesContainer">
+                        <div class="stat-box">
+                            <div class="stat-value" id="val_sii" style="font-size:1.25rem;">-</div>
+                            <div class="stat-value" id="val_sii_post" style="font-size:1.1rem; color:var(--text-secondary); margin-top:4px; border-top:1px solid var(--border-color); padding-top:4px;">-</div>
+                            <div class="stat-label">SII (Pre / Post)</div>
+                            <p class="tooltip-text">(PLT * ANC) / ALC</p>
+                        </div>
+                        <div class="stat-box">
+                            <div class="stat-value" id="val_siri" style="font-size:1.25rem;">-</div>
+                            <div class="stat-value" id="val_siri_post" style="font-size:1.1rem; color:var(--text-secondary); margin-top:4px; border-top:1px solid var(--border-color); padding-top:4px;">-</div>
+                            <div class="stat-label">SIRI (Pre / Post)</div>
+                            <p class="tooltip-text">(ANC * AMC) / ALC</p>
+                        </div>
+                        <div class="stat-box">
+                            <div class="stat-value" id="val_piv" style="font-size:1.25rem;">-</div>
+                            <div class="stat-value" id="val_piv_post" style="font-size:1.1rem; color:var(--text-secondary); margin-top:4px; border-top:1px solid var(--border-color); padding-top:4px;">-</div>
+                            <div class="stat-label">PIV (Pre / Post)</div>
+                            <p class="tooltip-text">(PLT * ANC * AMC) / ALC</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB: CT SIMULATION -->
+            <div class="tab-content" id="tab-sim">
+                <div class="glass-card">
+                    <h2 class="card-title">
+                        <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M4 6H2v14c0 1.1.9 2 2 2h14v-2H4V6zm16-4H8c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-1 9H9V9h10v2zm0-4H9V5h10v2z"/></svg>
+                        Immobilization & Patient Setup Details
+                    </h2>
+                    <div class="form-grid">
+                        <div class="form-group full-width">
+                            <label>Select Immobilization Device(s)</label>
+                            <div class="checkbox-list" id="simImmobContainer">
+                                <!-- Populated dynamically by JS based on disease site -->
+                            </div>
+                        </div>
+                        <div class="form-group full-width">
+                            <label>Patient Positioning & Instructions</label>
+                            <textarea id="sim_pos_notes" oninput="saveCurrentData()" placeholder="e.g. Supine, arms overhead holding T-grip; Bladder protocol: drink 500ml water 30 mins before simulation; Rectal protocol: empty rectum..."></textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="glass-card">
+                    <h2 class="card-title">
+                        <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 17h-2v-2h2v2zm2.07-7.75l-.9.92C13.45 12.9 13 13.5 13 15h-2v-.5c0-1.1.45-2.1 1.17-2.83l1.24-1.26c.37-.36.59-.86.59-1.41 0-1.1-.9-2-2-2s-2 .9-2 2H7c0-2.76 2.24-5 5-5s5 2.24 5 5c0 1.04-.42 1.99-1.07 2.75z"/></svg>
+                        Contrast & Imaging Scan Protocol
+                    </h2>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>Contrast Administration</label>
+                            <select id="sim_contrast" onchange="saveCurrentData()">
+                                <option value="None">None (Non-Contrast CT)</option>
+                                <option value="IV Contrast">IV Contrast (e.g. 80-100 ml Omnipaque)</option>
+                                <option value="Oral Contrast">Oral Contrast</option>
+                                <option value="IV + Oral">Both IV and Oral Contrast</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Slice Thickness</label>
+                            <select id="sim_slice" onchange="saveCurrentData()">
+                                <option value="1.5 mm">1.5 mm (SRS/SBRT Standard)</option>
+                                <option value="2.5 mm">2.5 mm (Standard Head & Neck/Pelvis)</option>
+                                <option value="3.0 mm">3.0 mm (Thorax/Breast/Abdomen)</option>
+                                <option value="5.0 mm">5.0 mm</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Scan Limits (Superior to Inferior)</label>
+                            <input type="text" id="sim_limits" oninput="saveCurrentData()" placeholder="e.g. Vertex to Carina, Mid-thorax to Mid-femur">
+                        </div>
+                        <div class="form-group">
+                            <label>Sim Checklist Status</label>
+                            <select id="sim_status" onchange="updateStageBadge(); saveCurrentData();">
+                                <option value="Pending">Pending Simulation</option>
+                                <option value="Done">Simulation Completed</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB: CONTOURING -->
+            <div class="tab-content" id="tab-contour">
+                <div class="glass-card">
+                    <h2 class="card-title">
+                        <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 17h-2v-2h2v2zm2.07-7.75l-.9.92C13.45 12.9 13 13.5 13 15h-2v-.5c0-1.1.45-2.1 1.17-2.83l1.24-1.26c.37-.36.59-.86.59-1.41 0-1.1-.9-2-2-2s-2 .9-2 2H7c0-2.76 2.24-5 5-5s5 2.24 5 5c0 1.04-.42 1.99-1.07 2.75z"/></svg>
+                        Target Volume Delineation (AAPM TG-263 / RTOG)
+                    </h2>
+                    <div class="form-grid">
+                        <div class="form-group full-width">
+                            <label>Target Checkoffs</label>
+                            <div class="checkbox-list">
+                                <label class="checkbox-item">
+                                    <input type="checkbox" id="cont_gtv" onchange="saveCurrentData()">
+                                    Gross Tumor Volume (GTV) Delineated
+                                </label>
+                                <label class="checkbox-item">
+                                    <input type="checkbox" id="cont_ctv" onchange="saveCurrentData()">
+                                    Clinical Target Volume (CTV) Delineated
+                                </label>
+                                <label class="checkbox-item">
+                                    <input type="checkbox" id="cont_ptv" onchange="saveCurrentData()">
+                                    Planning Target Volume (PTV) Delineated
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="glass-card">
+                    <h2 class="card-title">
+                        <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>
+                        Organs at Risk (OARs) Segmentations Checklist
+                    </h2>
+                    <div class="form-group" style="margin-bottom: 15px;">
+                        <label class="checkbox-item" style="display:inline-flex; width:auto;">
+                            <input type="checkbox" id="cont_ai_oar" onchange="saveCurrentData()">
+                            AI Auto-Segmentation Ran (Draft OARs)
+                        </label>
+                    </div>
+                    <label>Active Site-Specific OAR Checkpoints (TG-263):</label>
+                    <div class="checkbox-list" id="oarChecklistContainer">
+                        <!-- Populated by JS on site change -->
+                    </div>
+                </div>
+
+                <div class="glass-card">
+                    <h2 class="card-title">
+                        <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
+                        Peer Review & Sign-off
+                    </h2>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label class="checkbox-item">
+                                <input type="checkbox" id="cont_peer_review" onchange="saveCurrentData()">
+                                Contouring Peer-Reviewed (MDT/Chart Round)
+                            </label>
+                        </div>
+                        <div class="form-group">
+                            <label>Contouring Stage Status</label>
+                            <select id="cont_status" onchange="updateStageBadge(); saveCurrentData();">
+                                <option value="Pending">Pending Contouring Delineation</option>
+                                <option value="Done">Contouring Signed Off</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB: TPS PLANNING & QA -->
+            <div class="tab-content" id="tab-tps">
+                <div class="glass-card">
+                    <h2 class="card-title">
+                        <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-2 10h-4v4h-2v-4H7v-2h4V7h2v4h4v2z"/></svg>
+                        Treatment Planning System (TPS) Settings
+                    </h2>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>Treatment Delivery Technique</label>
+                            <select id="tps_tech" onchange="saveCurrentData()">
+                                <option value="VMAT">VMAT (Volumetric Modulated Arc Therapy)</option>
+                                <option value="IMRT">IMRT (Static-Gantry Step-and-Shoot)</option>
+                                <option value="3D-CRT">3D-CRT (Conformal Radiotherapy)</option>
+                                <option value="SBRT/SRS">SBRT/SRS (Stereotactic Radiotherapy)</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Total Prescribed Dose (Gy)</label>
+                            <input type="number" step="0.1" id="tps_dose_total" oninput="saveCurrentData()">
+                        </div>
+                        <div class="form-group">
+                            <label>Number of Fractions</label>
+                            <input type="number" id="tps_fractions" oninput="updateFractionDisplays(); saveCurrentData();">
+                        </div>
+                        <div class="form-group">
+                            <label>Prescription Reference Point</label>
+                            <input type="text" id="tps_ref_pt" oninput="saveCurrentData()" placeholder="e.g. 95% PTV Dmax">
+                        </div>
+                        <div class="form-group">
+                            <label>PTV coverage: V95% (%)</label>
+                            <input type="number" step="0.1" id="tps_ptv_v95" oninput="saveCurrentData()" placeholder="Target > 95%">
+                        </div>
+                        <div class="form-group">
+                            <label>PTV Max Dose (Gy)</label>
+                            <input type="number" step="0.1" id="tps_ptv_max" oninput="saveCurrentData()">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SITE SPECIFIC QUANTEC OAR DOSE CONSTRAINTS REFERENCE CARD -->
+                <div class="glass-card">
+                    <h2 class="card-title">
+                        <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-2 15H7v-2h10v2zm0-4H7v-2h10v2zm0-4H7V8h10v2z"/></svg>
+                        QUANTEC / RTOG OAR Dose Constraints Guide
+                    </h2>
+                    <div style="font-size:0.8rem; color:var(--text-secondary); margin-bottom:10px;">
+                        Standard tolerance constraints for the active disease site (cross-reference during optimization):
+                    </div>
+                    <div id="quantecTableContainer">
+                        <!-- Populated by JS on site change -->
+                    </div>
+                </div>
+
+                <div class="glass-card">
+                    <h2 class="card-title">
+                        <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 17h-2v-2h2v2zm2.07-7.75l-.9.92C13.45 12.9 13 13.5 13 15h-2v-.5c0-1.1.45-2.1 1.17-2.83l1.24-1.26c.37-.36.59-.86.59-1.41 0-1.1-.9-2-2-2s-2 .9-2 2H7c0-2.76 2.24-5 5-5s5 2.24 5 5c0 1.04-.42 1.99-1.07 2.75z"/></svg>
+                        Physics Planning Double-Check List
+                    </h2>
+                    <div class="checkbox-list">
+                        <label class="checkbox-item">
+                            <input type="checkbox" id="tps_chk_collision" onchange="saveCurrentData()">
+                            Gantry-Couch Collision Checked
+                        </label>
+                        <label class="checkbox-item">
+                            <input type="checkbox" id="tps_chk_density" onchange="saveCurrentData()">
+                            CT density calibration overrides verified
+                        </label>
+                        <label class="checkbox-item">
+                            <input type="checkbox" id="tps_chk_limit" onchange="saveCurrentData()">
+                            OAR Dose limits met (TG-101/RTOG constraints)
+                        </label>
+                        <label class="checkbox-item">
+                            <input type="checkbox" id="tps_chk_secondary" onchange="saveCurrentData()">
+                            Secondary MU Check calculations passed
+                        </label>
+                    </div>
+                </div>
+
+                <div class="glass-card">
+                    <h2 class="card-title">
+                        <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
+                        Patient-Specific Pre-Treatment QA (TG-142 verification)
+                    </h2>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>QA Measurement Device</label>
+                            <select id="qa_device" onchange="saveCurrentData()">
+                                <option value="ArcCheck">ArcCheck Diode Array</option>
+                                <option value="Portal Dosimetry">EPID Portal Dosimetry</option>
+                                <option value="MapCheck">MapCHECK 2D Profiler</option>
+                                <option value="Ion Chamber">Ionization Chamber Point Dose</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Gamma Index Pass Rate (%) [3%/3mm or 2%/2mm]</label>
+                            <input type="number" step="0.1" id="qa_gamma" oninput="saveCurrentData()" placeholder="Target > 95%">
+                        </div>
+                        <div class="form-group">
+                            <label>Point Dose Difference (%)</label>
+                            <input type="number" step="0.1" id="qa_point_dose" oninput="saveCurrentData()" placeholder="Target < 3%">
+                        </div>
+                        <div class="form-group">
+                            <label>Planning/QA Workflow Status</label>
+                            <select id="plan_status" onchange="updateStageBadge(); saveCurrentData();">
+                                <option value="Pending">Pending Planning & QA</option>
+                                <option value="Done">QA & Plan Approved</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB: TREATMENT & LOGS -->
+            <div class="tab-content" id="tab-treating">
+                <div class="glass-card">
+                    <h2 class="card-title">
+                        <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 14.5v-9l6 4.5-6 4.5z"/></svg>
+                        Fractionation Delivery Calendar Log
+                    </h2>
+                    <div class="fraction-tracker">
+                        <div class="form-group">
+                            <label>Fractions Delivered</label>
+                            <div class="fraction-counter" id="fractionCounterDisplay" style="margin-top:5px;">0 / 0</div>
+                        </div>
+                        <div style="flex-grow:1;">
+                            <label>Delivery Completion Progress</label>
+                            <div class="progress-bar-container" style="margin-top:10px;">
+                                <div class="progress-bar" id="progressBar"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- INTERACTIVE FRACTIONATION CALENDAR GRID -->
+                    <label style="margin-top: 15px; display:block;">Click to toggle fraction completion status:</label>
+                    <div class="fraction-grid-container" id="fractionGridContainer">
+                        <!-- Populated dynamically by JS -->
+                    </div>
+                    
+                    <div style="display:flex; gap:10px;">
+                        <button class="btn btn-secondary" style="font-size:0.8rem; padding:8px 12px;" onclick="setAllFractions(true)">Mark All Completed</button>
+                        <button class="btn btn-secondary" style="font-size:0.8rem; padding:8px 12px;" onclick="setAllFractions(false)">Reset All</button>
+                    </div>
+                </div>
+
+                <div class="glass-card">
+                    <h2 class="card-title">
+                        <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 17h-2v-2h2v2zm2.07-7.75l-.9.92C13.45 12.9 13 13.5 13 15h-2v-.5c0-1.1.45-2.1 1.17-2.83l1.24-1.26c.37-.36.59-.86.59-1.41 0-1.1-.9-2-2-2s-2 .9-2 2H7c0-2.76 2.24-5 5-5s5 2.24 5 5c0 1.04-.42 1.99-1.07 2.75z"/></svg>
+                        Daily Setup Verification Imaging (IGRT)
+                    </h2>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>Daily/Weekly Verification Protocol</label>
+                            <select id="tx_igrt" onchange="saveCurrentData()">
+                                <option value="Daily CBCT">Daily CBCT (Cone Beam CT)</option>
+                                <option value="Weekly CBCT">Weekly CBCT + Daily Orthogonal kV Pair</option>
+                                <option value="Daily Orthogonal kV">Daily Orthogonal kV Pair</option>
+                                <option value="No Imaging">Portal Film (EPID) - Weekly Verification</option>
+                            </select>
+                        </div>
+                        <div class="form-group full-width">
+                            <label>Average Setup Shift Correction Trends (mm)</label>
+                            <input type="text" id="tx_shifts" oninput="saveCurrentData()" placeholder="e.g. Lat: 2.1mm, Long: 1.4mm, Vert: -3.0mm; Rotational: <0.5 deg">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="glass-card">
+                    <h2 class="card-title">
+                        <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 17h-2v-2h2v2zm0-8h-2V7h2v2z"/></svg>
+                        Weekly Toxicity Review Grid (CTCAE v5.0)
+                    </h2>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>Radiation Dermatitis</label>
+                            <select id="tox_dermatitis" onchange="saveCurrentData()">
+                                <option value="Grade 0">Grade 0 - None</option>
+                                <option value="Grade 1">Grade 1 - Faint erythema or dry desquamation</option>
+                                <option value="Grade 2">Grade 2 - Moderate erythema or moist desquamation</option>
+                                <option value="Grade 3">Grade 3 - Moist desquamation outside skin folds, bleeding</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Dysphagia (Difficulty Swallowing)</label>
+                            <select id="tox_dysphagia" onchange="saveCurrentData()">
+                                <option value="Grade 0">Grade 0 - None</option>
+                                <option value="Grade 1">Grade 1 - Symptomatic, able to eat regular diet</option>
+                                <option value="Grade 2">Grade 2 - Modified diet/fluids indicated</option>
+                                <option value="Grade 3">Grade 3 - Severely altered eating, tube feeding indicated</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Fatigue</label>
+                            <select id="tox_fatigue" onchange="saveCurrentData()">
+                                <option value="Grade 0">Grade 0 - None</option>
+                                <option value="Grade 1">Grade 1 - Mild fatigue, no limitation of ADL</option>
+                                <option value="Grade 2">Grade 2 - Moderate, limit instrumental ADL</option>
+                                <option value="Grade 3">Grade 3 - Severe, limiting self-care ADL</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Gastrointestinal Toxicity (Diarrhea)</label>
+                            <select id="tox_diarrhea" onchange="saveCurrentData()">
+                                <option value="Grade 0">Grade 0 - None</option>
+                                <option value="Grade 1">Grade 1 - Increase of < 4 stools per day</option>
+                                <option value="Grade 2">Grade 2 - Increase of 4 - 6 stools per day</option>
+                                <option value="Grade 3">Grade 3 - Increase of >= 7 stools per day, IV fluids</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Overall Delivery Status</label>
+                            <select id="tx_status" onchange="updateStageBadge(); saveCurrentData();">
+                                <option value="Pending">Pending Initiation</option>
+                                <option value="Treating">Active Treatment</option>
+                                <option value="Completed">Treatment Course Completed</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB: APP SETTINGS PANEL -->
+            <div class="tab-content" id="tab-settings">
+                <div class="glass-card">
+                    <h2 class="card-title">
+                        <svg viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
+                        Clinical Role & Security Configuration
+                    </h2>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>Current Access Mode</label>
+                            <select id="cfg_user_role" onchange="changeRoleModeFromSettings()">
+                                <option value="Standard">Standard Access (Read-Write Checklists)</option>
+                                <option value="Admin">Administrator Access (PIN-Locked)</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Change Administrator PIN</label>
+                            <input type="text" id="cfg_admin_pin" value="1234" oninput="updateAdminPIN()">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="glass-card">
+                    <h2 class="card-title">
+                        <svg viewBox="0 0 24 24"><path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM19 18H6c-2.21 0-4-1.79-4-4 0-2.05 1.53-3.76 3.56-3.97l1.07-.11.5-.95C8.08 7.14 9.94 6 12 6c2.62 0 4.88 1.86 5.39 4.43l.3 1.5 1.53.11c1.56.1 2.78 1.41 2.78 2.96 0 1.65-1.35 3-3 3z"/></svg>
+                        Cloud Synchronization Engine (Google Firebase)
+                    </h2>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>Database Mode</label>
+                            <select id="cfg_cloud_mode_settings" onchange="toggleCloudConfigFieldsSettings()">
+                                <option value="Local">Local Storage Only (Offline)</option>
+                                <option value="Firebase">Google Firebase Cloud Firestore</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div id="firebaseConfigFieldsSettings" style="display:none; flex-direction:column; gap:12px; border-top: 1px solid var(--border-color); padding-top: 15px; margin-top: 15px;">
+                        <div style="font-size:0.8rem; color:var(--accent-teal); margin-bottom:8px; line-height: 1.4;">
+                            Paste your web application credentials from the Firebase Console to enable real-time synchronization:
+                        </div>
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label>API Key (apiKey)</label>
+                                <input type="text" id="cfg_apiKey_settings" placeholder="AIzaSy...">
+                            </div>
+                            <div class="form-group">
+                                <label>Auth Domain (authDomain)</label>
+                                <input type="text" id="cfg_authDomain_settings" placeholder="your-project.firebaseapp.com">
+                            </div>
+                            <div class="form-group">
+                                <label>Project ID (projectId)</label>
+                                <input type="text" id="cfg_projectId_settings" placeholder="your-project-id">
+                            </div>
+                            <div class="form-group">
+                                <label>Storage Bucket (storageBucket)</label>
+                                <input type="text" id="cfg_storageBucket_settings" placeholder="your-project.appspot.com">
+                            </div>
+                            <div class="form-group">
+                                <label>Messaging Sender ID</label>
+                                <input type="text" id="cfg_messagingSenderId_settings" placeholder="1234567890">
+                            </div>
+                            <div class="form-group">
+                                <label>App ID (appId)</label>
+                                <input type="text" id="cfg_appId_settings" placeholder="1:1234:web:abcd">
+                            </div>
+                        </div>
+                        <div style="display:flex; gap:10px; margin-top:15px;">
+                            <button class="btn btn-secondary" onclick="migrateLocalToCloudFromSettings()">
+                                Migrate Local Registry to Cloud
+                            </button>
+                            <button class="btn" onclick="saveCloudSettingsFromSettings()">
+                                Apply Cloud Connection
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="glass-card">
+                    <h2 class="card-title">
+                        <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>
+                        Database Maintenance & Settings Options
+                    </h2>
+                    <div style="display:flex; gap:10px; flex-wrap: wrap;">
+                        <button class="btn btn-secondary" onclick="exportDatabase()">Backup Database (Export JSON)</button>
+                        <button class="btn btn-secondary" onclick="triggerImport()">Restore Database (Import JSON)</button>
+                        <button class="btn btn-secondary" id="tblToggleCalculators" onclick="toggleInflammatoryCalculationsDisplay()">Toggle Calculations Visibility</button>
+                        <button class="btn btn-danger" onclick="clearFullDatabase()">Clear Full Database</button>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- MODAL: REGISTER PATIENT -->
+    <div class="modal-overlay" id="addPatientModal">
+        <div class="modal">
+            <div class="modal-header">Register New Patient File</div>
+            <div style="display:flex; flex-direction:column; gap:12px;">
+                <div class="form-group">
+                    <label>CR Number</label>
+                    <input type="text" id="new_cr" placeholder="e.g. 379132200581534">
+                </div>
+                <div class="form-group">
+                    <label>Full Name</label>
+                    <input type="text" id="new_name" placeholder="e.g. Ramesh Kumar">
+                </div>
+                <div class="form-group">
+                    <label>Age</label>
+                    <input type="number" id="new_age" placeholder="e.g. 55">
+                </div>
+                <div class="form-group">
+                    <label>Gender</label>
+                    <select id="new_gender">
+                        <option value="Female">Female</option>
+                        <option value="Male">Male</option>
+                        <option value="Other">Other</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Primary Disease Site</label>
+                    <select id="new_site">
+                        <option value="Head & Neck">Head & Neck</option>
+                        <option value="Central Nervous System (CNS)">Central Nervous System (CNS)</option>
+                        <option value="Breast">Breast</option>
+                        <option value="Thoracic (Lung/Esophagus)">Thoracic (Lung/Esophagus)</option>
+                        <option value="Gastrointestinal (GI)">Gastrointestinal (GI)</option>
+                        <option value="Gynecological">Gynecological (Cervix/Endometrium)</option>
+                        <option value="Genitourinary (Prostate/Bladder)">Genitourinary (Prostate/Bladder)</option>
+                        <option value="Hematological / Lymphoma">Hematological / Lymphoma</option>
+                        <option value="Skin / Musculoskeletal">Skin / Musculoskeletal (Sarcoma)</option>
+                        <option value="Palliative / Metastatic">Palliative / Metastatic (Symptom Control)</option>
+                    </select>
+                </div>
+            </div>
+            <div class="modal-buttons">
+                <button class="btn btn-secondary" onclick="closeAddPatientModal()">Cancel</button>
+                <button class="btn" onclick="saveNewPatient()">Register & Open</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: CLOUD SYNCHRONIZATION SETTINGS (Fallback Click Indicator) -->
+    <div class="modal-overlay" id="cloudSettingsModal">
+        <div class="modal">
+            <div class="modal-header">
+                <span>Cloud Synchronization Setup</span>
+                <span style="font-size: 0.75rem; color: var(--text-secondary); cursor: pointer;" onclick="closeCloudModal()">Close [X]</span>
+            </div>
+            <div style="font-size: 0.88rem; color: var(--text-secondary); line-height: 1.5; margin-bottom: 12px;">
+                Note: Firebase Cloud settings can now also be fully customized inside the dedicated **App Settings** tab on the main interface.
+            </div>
+            <div class="modal-buttons">
+                <button class="btn" onclick="closeCloudModal(); switchTab('tab-settings');">Go to App Settings Tab</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Database State
+        let db = [];
+        let activePatientId = null;
+
+        // Cloud Synchronization State variables
+        let cloudSyncMode = "Local";
+        let firestoreDb = null;
+        let firestoreUnsubscribe = null;
+        let isConfiguringCloud = false;
+
+        // Administrative Access state
+        let userRole = "Standard";
+        let adminPINCode = "1234";
+
+        // Toggle calculations visibility state
+        let hideCalculationsFlag = false;
+
+        // Standard Demo Patients (linked to the user's clinical documents)
+        const demoPatients = [
+            {
+                id: "3791325000001",
+                cr: "379132200115843",
+                name: "Preeti Sharma",
+                age: 56,
+                gender: "Female",
+                site: "Head & Neck",
+                ecog: "1",
+                stage_t: "T3",
+                stage_n: "N2",
+                stage_m: "M0",
+                history: "56 year old female pt came with chief complaints of difficulty in swallowing, vomiting and weight loss of about 6 kgs from past 2 months.\nUGIE: hypopharynx growth, HPE: hyperplastic squamous epithelium with ulceration.\nFNAC from level III cervical lymph node: Metastatic squamous cell carcinoma.\nCECT Neck and Chest: Heterogeneously enhancing mass lesion predominantly centered in hypopharynx posterior wall with extension T3. Multiple enlarged bilateral level II, III, VI nodes seen with necrotic centers.",
+                lab_hb: 9.8,
+                lab_hb_post: 8.5,
+                lab_plt: 270,
+                lab_plt_post: 210,
+                lab_wbc: 7.3,
+                lab_wbc_post: 4.8,
+                lab_anc: 5047,
+                lab_anc_post: 3200,
+                lab_alc: 1630,
+                lab_alc_post: 1100,
+                lab_amc: 700,
+                lab_amc_post: 400,
+                lab_crp: 6.2,
+                lab_crp_post: 14.5,
+                lab_ldh: 210,
+                lab_ldh_post: 280,
+                sim_immob_selected: ["Thermoplastic Mask (3-Clamp/5-Clamp)", "Neck Rest (A-F plastic)"],
+                sim_pos_notes: "Supine with H&N thermoplastic mask, neck rest, peg board. Peg in mouth during simulation scan to push tongue away.",
+                sim_contrast: "IV Contrast",
+                sim_slice: "2.5 mm",
+                sim_limits: "Vertex to carina",
+                sim_status: "Done",
+                cont_gtv: true,
+                cont_ctv: true,
+                cont_ptv: true,
+                cont_ai_oar: true,
+                oars: ["Spinal Cord", "Brainstem", "Optic Chiasm", "Parotid Left", "Parotid Right", "Mandible"],
+                cont_peer_review: true,
+                cont_status: "Done",
+                tps_tech: "VMAT",
+                tps_dose_total: 70,
+                tps_fractions: 35,
+                tps_ref_pt: "95% PTV coverage",
+                tps_ptv_v95: 96.2,
+                tps_ptv_max: 74.5,
+                tps_chk_collision: true,
+                tps_chk_density: true,
+                tps_chk_limit: true,
+                tps_chk_secondary: true,
+                qa_device: "ArcCheck",
+                qa_gamma: 98.4,
+                qa_point_dose: 1.2,
+                plan_status: "Done",
+                fractions_delivered: 12,
+                tx_igrt: "Daily CBCT",
+                tx_shifts: "Lat: 1.2mm, Long: 0.8mm, Vert: -1.5mm",
+                tox_dermatitis: "Grade 1",
+                tox_dysphagia: "Grade 2",
+                tox_fatigue: "Grade 1",
+                tox_diarrhea: "Grade 0",
+                tx_status: "Treating"
+            },
+            {
+                id: "3791325000002",
+                cr: "379132400899059",
+                name: "Anjali Devi",
+                age: 71,
+                gender: "Female",
+                site: "Gynecological",
+                ecog: "2",
+                stage_t: "T1",
+                stage_n: "N0",
+                stage_m: "M1",
+                history: "71/Female, known case of ca endometrium. Underwent TLH + B/L PLND on 15/5/24.\nHPR: Poorly differentiated adenocarcinoma, Endometrium, Grade 3 (4.5*2.5*1.5cm). myometrial infiltration > 50%. LVI positive.\nAdjuvant RT: 55GY/25# + 2 # VBT 5.5GY.\nPost-treatment progression: WB PET CT showed subcentimeter bilateral lung nodules and new mildly FDG avid left supraclavicular node, indicating pulmonary and node metastasis. Started on chemotherapy (weekly Paclitaxel + Carboplatin).",
+                lab_hb: 10.4,
+                lab_hb_post: 9.2,
+                lab_plt: 419,
+                lab_plt_post: 280,
+                lab_wbc: 8.0,
+                lab_wbc_post: 3.5,
+                lab_anc: 3048,
+                lab_anc_post: 1900,
+                lab_alc: 2390,
+                lab_alc_post: 1200,
+                lab_amc: 600,
+                lab_amc_post: 350,
+                lab_crp: 16.1,
+                lab_crp_post: 28.4,
+                lab_ldh: 148,
+                lab_ldh_post: 190,
+                sim_immob_selected: ["Knee-Fix & Foot-Board", "Pelvic Vacuum Cushion (Vac-Lok)"],
+                sim_pos_notes: "Supine with knee cushion and foot rest. Arms across chest. Bladder filling protocol: empty bladder, drink 450ml water, scan after 40 minutes.",
+                sim_contrast: "None",
+                sim_slice: "3.0 mm",
+                sim_limits: "Mid-thorax to mid-femur",
+                sim_status: "Done",
+                cont_gtv: false,
+                cont_ctv: true,
+                cont_ptv: true,
+                cont_ai_oar: true,
+                oars: ["Bladder", "Rectum", "Femoral Head Left", "Femoral Head Right", "Bowel Bag"],
+                cont_peer_review: true,
+                cont_status: "Done",
+                tps_tech: "IMRT",
+                tps_dose_total: 55,
+                tps_fractions: 25,
+                tps_ref_pt: "95% PTV coverage",
+                tps_ptv_v95: 95.1,
+                tps_ptv_max: 58.2,
+                tps_chk_collision: true,
+                tps_chk_density: true,
+                tps_chk_limit: true,
+                tps_chk_secondary: true,
+                qa_device: "Portal Dosimetry",
+                qa_gamma: 99.1,
+                qa_point_dose: 0.8,
+                plan_status: "Done",
+                fractions_delivered: 25,
+                tx_igrt: "Weekly CBCT",
+                tx_shifts: "Lat: 2.3mm, Long: 1.5mm, Vert: -2.1mm",
+                tox_dermatitis: "Grade 1",
+                tox_dysphagia: "Grade 0",
+                tox_fatigue: "Grade 2",
+                tox_diarrhea: "Grade 2",
+                tx_status: "Completed"
+            },
+            {
+                id: "3791325000003",
+                cr: "379132200581534",
+                name: "Srinivasa Raju",
+                age: 51,
+                gender: "Male",
+                site: "Breast",
+                ecog: "0",
+                stage_t: "T2",
+                stage_n: "N0",
+                stage_m: "M0",
+                history: "51 year old male patient presenting with bilateral breast lumps. Histopathology reveals encapsulated papillary carcinoma with invasion in the breast tissue. Planned for adjuvant radiotherapy following conservative surgical resection.",
+                lab_hb: 16.1,
+                lab_hb_post: 15.2,
+                lab_plt: 234,
+                lab_plt_post: 220,
+                lab_wbc: 7.4,
+                lab_wbc_post: 6.5,
+                lab_anc: 4140,
+                lab_anc_post: 3800,
+                lab_alc: 2440,
+                lab_alc_post: 2100,
+                lab_amc: 520,
+                lab_amc_post: 450,
+                lab_crp: 1.1,
+                lab_crp_post: 1.8,
+                lab_ldh: 180,
+                lab_ldh_post: 195,
+                sim_immob_selected: ["Breast Board / Wingboard"],
+                sim_pos_notes: "Supine on breast board, arms raised overhead holding bars, head turned to the contralateral side.",
+                sim_contrast: "None",
+                sim_slice: "3.0 mm",
+                sim_limits: "Mid-neck to mid-abdomen",
+                sim_status: "Done",
+                cont_gtv: false,
+                cont_ctv: true,
+                cont_ptv: true,
+                cont_ai_oar: true,
+                oars: ["Heart", "Ipsilateral Lung", "Contralateral Lung", "Contralateral Breast", "Spinal Cord"],
+                cont_peer_review: true,
+                cont_status: "Done",
+                tps_tech: "3D-CRT",
+                tps_dose_total: 50,
+                tps_fractions: 25,
+                tps_ref_pt: "95% PTV coverage",
+                tps_ptv_v95: 95.8,
+                tps_ptv_max: 53.4,
+                tps_chk_collision: true,
+                tps_chk_density: true,
+                tps_chk_limit: true,
+                tps_chk_secondary: true,
+                qa_device: "MapCheck",
+                qa_gamma: 97.2,
+                qa_point_dose: 1.5,
+                plan_status: "Done",
+                fractions_delivered: 0,
+                tx_igrt: "Weekly CBCT",
+                tx_shifts: "",
+                tox_dermatitis: "Grade 0",
+                tox_dysphagia: "Grade 0",
+                tox_fatigue: "Grade 0",
+                tox_diarrhea: "Grade 0",
+                tx_status: "Pending"
+            }
+        ];
+
+        // 10 Radiation sites - TG-263 compliant OAR lists
+        const oarDatabase = {
+            "Head & Neck": ["Spinal Cord", "Brainstem", "Optic Chiasm", "Optic Nerve Left", "Optic Nerve Right", "Parotid Left", "Parotid Right", "Submandibular Left", "Submandibular Right", "Mandible", "Cochlea Left", "Cochlea Right", "Larynx", "Esophagus Cervical", "Pharyngeal Constrictors"],
+            "Central Nervous System (CNS)": ["Brainstem", "Spinal Cord", "Optic Chiasm", "Optic Nerve Left", "Optic Nerve Right", "Lens Left", "Lens Right", "Eye Globe Left", "Eye Globe Right", "Cochlea Left", "Cochlea Right", "Hippocampus", "Pituitary Gland"],
+            "Breast": ["Heart", "Ipsilateral Lung", "Contralateral Lung", "Contralateral Breast", "Spinal Cord", "Humeral Head Left", "Humeral Head Right", "Esophagus", "Thyroid"],
+            "Thoracic (Lung/Esophagus)": ["Lungs (Total)", "Heart", "Esophagus", "Spinal Cord", "Trachea", "Proximal Bronchial Tree", "Carina", "Aorta"],
+            "Gastrointestinal (GI)": ["Bowel Bag (Small/Large)", "Kidneys (Total)", "Kidney Left", "Kidney Right", "Liver", "Stomach", "Duodenum", "Spinal Cord", "Femoral Head Left", "Femoral Head Right"],
+            "Gynecological": ["Bladder", "Rectum", "Sigmoid Colon", "Bowel Bag", "Femoral Head Left", "Femoral Head Right", "Urethra", "Vaginal Mucosa"],
+            "Genitourinary (Prostate/Bladder)": ["Rectum", "Bladder", "Bowel Bag", "Femoral Head Left", "Femoral Head Right", "Penile Bulb", "Urethra"],
+            "Hematological / Lymphoma": ["Lungs (Total)", "Kidneys (Total)", "Lens Left", "Lens Right", "Heart", "Spinal Cord", "Liver"],
+            "Skin / Musculoskeletal": ["Bone Joint Spared", "Major Nerve Path", "Skin Fold Avoidance", "Spinal Cord", "Femoral Head Left", "Femoral Head Right"],
+            "Palliative / Metastatic": ["Spinal Cord", "Esophagus", "Lungs (Total)", "Heart", "Brainstem", "Optic Chiasm"]
+        };
+
+        // 10 Radiation sites - QUANTEC OAR tolerance presets
+        const quantecDatabase = {
+            "Head & Neck": [
+                { organ: "Spinal Cord", constraint: "Max Dose ≤ 45 Gy", endpoint: "Myelopathy" },
+                { organ: "Brainstem", constraint: "Max Dose ≤ 54 Gy", endpoint: "Neuropathy / Cranial Nerve deficit" },
+                { organ: "Parotid Glands (B/L)", constraint: "Mean Dose < 25 Gy (at least 1 gland)", endpoint: "Xerostomia (dry mouth)" },
+                { organ: "Mandible", constraint: "Max Dose < 70 Gy", endpoint: "Osteoradionecrosis" },
+                { organ: "Larynx", constraint: "Mean Dose < 40 Gy", endpoint: "Aspiration / Vocal cord edema" }
+            ],
+            "Central Nervous System (CNS)": [
+                { organ: "Brainstem", constraint: "Max Dose ≤ 54 Gy", endpoint: "Neuropathy / Necrosis" },
+                { organ: "Optic Chiasm", constraint: "Max Dose < 50 Gy (SRS < 10-12 Gy)", endpoint: "Blindness / Optic neuropathy" },
+                { organ: "Optic Nerve (L/R)", constraint: "Max Dose < 50 Gy", endpoint: "Optic neuritis / Blindness" },
+                { organ: "Lens (L/R)", constraint: "Max Dose < 10 Gy", endpoint: "Cataract formation" },
+                { organ: "Cochlea (L/R)", constraint: "Mean Dose ≤ 45 Gy", endpoint: "Sensorineural hearing loss" }
+            ],
+            "Breast": [
+                { organ: "Heart (Left Breast)", constraint: "Mean Dose ≤ 5 Gy, V25Gy < 10%", endpoint: "Ischemic Heart Disease" },
+                { organ: "Ipsilateral Lung", constraint: "V20Gy ≤ 20%, V5Gy ≤ 35%", endpoint: "Radiation Pneumonitis" },
+                { organ: "Contralateral Lung", constraint: "Mean Dose < 3 Gy", endpoint: "Secondary Carcinogenesis" },
+                { organ: "Contralateral Breast", constraint: "Max Dose < 3 Gy", endpoint: "Secondary malignancies" }
+            ],
+            "Thoracic (Lung/Esophagus)": [
+                { organ: "Lungs (Total)", constraint: "Mean Dose ≤ 20 Gy, V20Gy ≤ 30%", endpoint: "Pneumonitis" },
+                { organ: "Esophagus", constraint: "Mean Dose < 34 Gy, Max < 68 Gy", endpoint: "Esophagitis / Stricture" },
+                { organ: "Heart", constraint: "Mean Dose < 26 Gy, V40Gy < 30%", endpoint: "Pericarditis / Cardiac death" },
+                { organ: "Spinal Cord", constraint: "Max Dose ≤ 45 Gy", endpoint: "Myelopathy" }
+            ],
+            "Gastrointestinal (GI)": [
+                { organ: "Small Bowel / Bowel Bag", constraint: "V45Gy < 195 cc, Max < 54 Gy", endpoint: "Enteritis / Perforation" },
+                { organ: "Kidneys (Total)", constraint: "Mean Dose < 18 Gy, V20Gy < 32%", endpoint: "Renal dysfunction" },
+                { organ: "Liver (Total)", constraint: "Mean Dose < 30 Gy, V30Gy < 60%", endpoint: "RILD (Radiation Induced Liver Disease)" },
+                { organ: "Stomach", constraint: "Max Dose < 54 Gy, V45Gy < 35%", endpoint: "Ulceration / Bleeding" }
+            ],
+            "Gynecological": [
+                { organ: "Rectum", constraint: "V50Gy < 50%, V70Gy < 20%", endpoint: "Proctitis / Bleeding" },
+                { organ: "Bladder", constraint: "V50Gy < 50%, V70Gy < 30%", endpoint: "Cystitis / Hematuria" },
+                { organ: "Femoral Heads (B/L)", constraint: "V50Gy < 5%", endpoint: "Fracture / Avascular necrosis" },
+                { organ: "Bowel Bag", constraint: "V45Gy < 195 cc", endpoint: "Enteritis / Diarrhea" }
+            ],
+            "Genitourinary (Prostate/Bladder)": [
+                { organ: "Rectum", constraint: "V70Gy < 25%, V50Gy < 50%", endpoint: "Proctitis / Toxicity" },
+                { organ: "Bladder", constraint: "V70Gy < 35%, V50Gy < 50%", endpoint: "Cystitis / Contracture" },
+                { organ: "Femoral Heads (B/L)", constraint: "V50Gy < 5%", endpoint: "Necrosis / Fracture" },
+                { organ: "Penile Bulb", constraint: "Mean Dose < 52 Gy, V50Gy < 50%", endpoint: "Erectile dysfunction" }
+            ],
+            "Hematological / Lymphoma": [
+                { organ: "Lungs (Total)", constraint: "Mean Dose < 15 Gy (TBI block < 12 Gy)", endpoint: "Interstitial pneumonitis" },
+                { organ: "Kidneys (Total)", constraint: "Mean Dose < 15 Gy", endpoint: "Nephritis" },
+                { organ: "Lens (L/R)", constraint: "Max Dose < 10 Gy (preferably < 5 Gy)", endpoint: "Cataracts" }
+            ],
+            "Skin / Musculoskeletal": [
+                { organ: "Bone / Joint Space", constraint: "Max Dose < 50 Gy (Sparing 1/3 circ)", endpoint: "Stiffness / Pathological Fracture" },
+                { organ: "Humeral/Femoral Head", constraint: "Max Dose < 50 Gy", endpoint: "Avascular necrosis" }
+            ],
+            "Palliative / Metastatic": [
+                { organ: "Spinal Cord", constraint: "Max Dose ≤ 45 Gy (or 8Gy x 1, 4Gy x 5)", endpoint: "Myelopathy" },
+                { organ: "Brainstem", constraint: "Max Dose < 54 Gy (or 30Gy x 10)", endpoint: "Necrosis / Cranial nerve palsy" }
+            ]
+        };
+
+        // 10 Radiation sites - Immobilization presets
+        const simImmobilizationPresets = {
+            "Head & Neck": ["Thermoplastic Mask (3-Clamp/5-Clamp)", "Bite Block / Mouthpiece", "Neck Rest (A-F plastic)", "Peg Board"],
+            "Central Nervous System (CNS)": ["Thermoplastic Mask (SRS Frame/Standard)", "Neck Rest", "Custom Vacuum Cushion (Head/Shoulder Vac-Lok)"],
+            "Breast": ["Breast Board / Wingboard", "Vacuum Cushion (Vac-Lok)", "Contralateral Breast Retractor Band"],
+            "Thoracic (Lung/Esophagus)": ["Wingboard with Arm Supports", "Custom Vacuum Cushion (Vac-Lok)", "Knee-Fix"],
+            "Gastrointestinal (GI)": ["Belly Board (Prone positioning)", "Knee-Fix & Foot-Board (Supine)", "Custom Vacuum Cushion (Vac-Lok)"],
+            "Gynecological": ["Knee-Fix & Foot-Board", "Pelvic Vacuum Cushion (Vac-Lok)", "Prone Pillow / Belly Board"],
+            "Genitourinary (Prostate/Bladder)": ["Knee-Fix & Foot-Board", "Pelvic Vacuum Cushion (Vac-Lok)", "Indexed Positioning Bars"],
+            "Hematological / Lymphoma": ["Custom Vacuum Cushion (Vac-Lok)", "Thermoplastic Mask", "Sphenoid Blocks / Head rests"],
+            "Skin / Musculoskeletal": ["Custom vacuum cushion (Vac-Lok for limbs)", "Thermoplastic Mask for extremity sparing", "Couch extension boards"],
+            "Palliative / Metastatic": ["Standard Head Rest", "Wingboard with Arm Supports", "Knee-Fix & Foot-Board", "Vacuum Cushion (Vac-Lok)"]
+        };
+
+        // Initialize App
+        window.onload = function() {
+            initApp();
+            setupPrintListener();
+        };
+
+        function initApp() {
+            // Load admin PIN code from local storage if customized
+            const savedPIN = localStorage.getItem("oncoflow_admin_pin");
+            if (savedPIN) {
+                adminPINCode = savedPIN;
+                document.getElementById("cfg_admin_pin").value = savedPIN;
+            }
+
+            // Load calculations toggle visibility state
+            const savedCalcToggle = localStorage.getItem("oncoflow_hide_calculations");
+            if (savedCalcToggle === "true") {
+                hideCalculationsFlag = true;
+                document.getElementById("inflammatoryIndicesContainer").style.display = "none";
+                document.getElementById("tblToggleCalculators").innerText = "Show Calculations";
+            }
+
+            loadDatabase();
+            renderPatientList();
+            
+            // Check if Firebase cloud mode was previously configured and active
+            const savedMode = localStorage.getItem("oncoflow_sync_mode");
+            if (savedMode === "Firebase") {
+                const config = getSavedFirebaseConfig();
+                if (config) {
+                    setCloudStatus("connecting", "Connecting...");
+                    loadFirebaseSDK(() => {
+                        connectFirebase(config);
+                    });
+                } else {
+                    setCloudStatus("error", "Keys Missing");
+                }
+            } else {
+                setCloudStatus("local", "Local Storage");
+                if (db.length > 0) {
+                    selectPatient(db[0].id);
+                }
+            }
+        }
+
+        // Load DB from localStorage or fallback to Demo Data
+        function loadDatabase() {
+            const stored = localStorage.getItem("oncoflow_db");
+            if (stored) {
+                try {
+                    db = JSON.parse(stored);
+                } catch(e) {
+                    console.error("Error reading db from local storage", e);
+                    db = [...demoPatients];
+                }
+            } else {
+                db = [...demoPatients];
+                saveDatabase();
+            }
+        }
+
+        // Save DB to localStorage (Always keep a local copy as cache)
+        function saveDatabase() {
+            localStorage.setItem("oncoflow_db", JSON.stringify(db));
+        }
+
+        // Render Patient Sidebar List
+        function renderPatientList() {
+            const listContainer = document.getElementById("patientListContainer");
+            listContainer.innerHTML = "";
+
+            const query = document.getElementById("searchBar").value.toLowerCase();
+            const filterStage = document.getElementById("stageFilter").value;
+
+            db.forEach(pt => {
+                // Determine display stage badge
+                const stage = determinePatientStage(pt);
+
+                // Search filtering
+                const matchSearch = pt.name.toLowerCase().includes(query) || pt.cr.toLowerCase().includes(query);
+                
+                // Stage filtering
+                const matchStage = (filterStage === "all") || (stage === filterStage);
+
+                if (matchSearch && matchStage) {
+                    const card = document.createElement("div");
+                    card.className = `patient-card ${activePatientId === pt.id ? 'active' : ''}`;
+                    card.onclick = () => selectPatient(pt.id);
+
+                    let badgeClass = "status-sim";
+                    if (stage === "Contouring") badgeClass = "status-contour";
+                    if (stage === "Planning") badgeClass = "status-planning";
+                    if (stage === "QA") badgeClass = "status-qa";
+                    if (stage === "Treating") badgeClass = "status-treating";
+                    if (stage === "Completed") badgeClass = "status-completed";
+
+                    card.innerHTML = `
+                        <div class="patient-card-name">${pt.name}</div>
+                        <div class="patient-card-meta">
+                            <span>CR: ${pt.cr}</span>
+                            <span class="status-badge ${badgeClass}">${stage}</span>
+                        </div>
+                    `;
+                    listContainer.appendChild(card);
+                }
+            });
+        }
+
+        // Determine current workflow stage based on checklists
+        function determinePatientStage(pt) {
+            if (pt.tx_status === "Completed") return "Completed";
+            if (pt.tx_status === "Treating") return "Treating";
+            if (pt.plan_status === "Done") return "QA";
+            if (pt.cont_status === "Done") return "Planning";
+            if (pt.sim_status === "Done") return "Contouring";
+            return "Simulation";
+        }
+
+        // Switch Tabs
+        function switchTab(tabId) {
+            document.querySelectorAll(".tab-btn").forEach(btn => btn.classList.remove("active"));
+            document.querySelectorAll(".tab-content").forEach(content => content.classList.remove("active"));
+
+            // Set active button
+            const eventBtn = Array.from(document.querySelectorAll(".tab-btn")).find(btn => btn.getAttribute("onclick").includes(tabId));
+            if (eventBtn) eventBtn.classList.add("active");
+
+            // Set active panel
+            document.getElementById(tabId).classList.add("active");
+
+            // If switching to Settings tab, sync configurations panel inputs
+            if (tabId === "tab-settings") {
+                document.getElementById("cfg_user_role").value = userRole;
+                document.getElementById("cfg_admin_pin").value = adminPINCode;
+
+                const mode = localStorage.getItem("oncoflow_sync_mode") || "Local";
+                document.getElementById("cfg_cloud_mode_settings").value = mode;
+
+                const config = getSavedFirebaseConfig();
+                if (config) {
+                    document.getElementById("cfg_apiKey_settings").value = config.apiKey || "";
+                    document.getElementById("cfg_authDomain_settings").value = config.authDomain || "";
+                    document.getElementById("cfg_projectId_settings").value = config.projectId || "";
+                    document.getElementById("cfg_storageBucket_settings").value = config.storageBucket || "";
+                    document.getElementById("cfg_messagingSenderId_settings").value = config.messagingSenderId || "";
+                    document.getElementById("cfg_appId_settings").value = config.appId || "";
+                }
+                toggleCloudConfigFieldsSettings();
+            }
+        }
+
+        // Select Active Patient
+        function selectPatient(id) {
+            activePatientId = id;
+            if (!id) {
+                document.getElementById("noPatientState").style.display = "flex";
+                document.getElementById("tabsNav").style.display = "none";
+                document.getElementById("deletePatientBtn").style.display = "none";
+                document.getElementById("printChartBtn").style.display = "none";
+                document.getElementById("activePatientSummary").innerHTML = `
+                    <div class="empty-state" style="padding:0; align-items:flex-start;">
+                        <h2>No Patient Selected</h2>
+                    </div>
+                `;
+                return;
+            }
+
+            const pt = db.find(p => p.id === id);
+            if (!pt) {
+                document.getElementById("noPatientState").style.display = "flex";
+                document.getElementById("tabsNav").style.display = "none";
+                document.getElementById("deletePatientBtn").style.display = "none";
+                document.getElementById("printChartBtn").style.display = "none";
+                document.getElementById("activePatientSummary").innerHTML = "<h2>No Patient Selected</h2>";
+                return;
+            }
+
+            document.getElementById("noPatientState").style.display = "none";
+            document.getElementById("tabsNav").style.display = "flex";
+            document.getElementById("printChartBtn").style.display = "inline-flex";
+            updateDeleteButtonVisibility();
+
+            // Update patient summary in header
+            const stage = determinePatientStage(pt);
+            document.getElementById("activePatientSummary").innerHTML = `
+                <div class="active-patient-title">
+                    <span class="active-patient-name">${pt.name}</span>
+                    <span class="status-badge status-sim" id="hdr_badge">${stage}</span>
+                </div>
+                <div class="active-patient-meta">
+                    <span>CR No: <strong>${pt.cr}</strong></span>
+                    <span>Age/Gender: <strong>${pt.age}y / ${pt.gender}</strong></span>
+                    <span>Diagnosis: <strong>${pt.site} (${pt.stage_t || 'Tx'}${pt.stage_n || 'Nx'}${pt.stage_m || 'M0'})</strong></span>
+                </div>
+            `;
+            updateHdrBadgeClass(stage);
+
+            // Populate Form Fields
+            document.getElementById("pt_cr").value = pt.cr || "";
+            document.getElementById("pt_name").value = pt.name || "";
+            document.getElementById("pt_age").value = pt.age || "";
+            document.getElementById("pt_gender").value = pt.gender || "Female";
+            document.getElementById("pt_ecog").value = pt.ecog || "0";
+            document.getElementById("pt_site").value = pt.site || "Head & Neck";
+            document.getElementById("pt_stage_t").value = pt.stage_t || "Tx";
+            document.getElementById("pt_stage_n").value = pt.stage_n || "Nx";
+            document.getElementById("pt_stage_m").value = pt.stage_m || "M0";
+            document.getElementById("pt_history").value = pt.history || "";
+
+            // Labs (Pre values)
+            document.getElementById("lab_hb").value = pt.lab_hb || "";
+            document.getElementById("lab_plt").value = pt.lab_plt || "";
+            document.getElementById("lab_wbc").value = pt.lab_wbc || "";
+            document.getElementById("lab_anc").value = pt.lab_anc || "";
+            document.getElementById("lab_alc").value = pt.lab_alc || "";
+            document.getElementById("lab_amc").value = pt.lab_amc || "";
+            document.getElementById("lab_crp").value = pt.lab_crp || "";
+            document.getElementById("lab_ldh").value = pt.lab_ldh || "";
+
+            // Labs (Post values)
+            document.getElementById("lab_hb_post").value = pt.lab_hb_post || "";
+            document.getElementById("lab_plt_post").value = pt.lab_plt_post || "";
+            document.getElementById("lab_wbc_post").value = pt.lab_wbc_post || "";
+            document.getElementById("lab_anc_post").value = pt.lab_anc_post || "";
+            document.getElementById("lab_alc_post").value = pt.lab_alc_post || "";
+            document.getElementById("lab_amc_post").value = pt.lab_amc_post || "";
+            document.getElementById("lab_crp_post").value = pt.lab_crp_post || "";
+            document.getElementById("lab_ldh_post").value = pt.lab_ldh_post || "";
+
+            // CT Sim Setup
+            renderImmobilizationChecklist(pt.site, pt.sim_immob_selected || []);
+            document.getElementById("sim_pos_notes").value = pt.sim_pos_notes || "";
+            document.getElementById("sim_contrast").value = pt.sim_contrast || "None";
+            document.getElementById("sim_slice").value = pt.sim_slice || "3.0 mm";
+            document.getElementById("sim_limits").value = pt.sim_limits || "";
+            document.getElementById("sim_status").value = pt.sim_status || "Pending";
+
+            // Contouring
+            document.getElementById("cont_gtv").checked = !!pt.cont_gtv;
+            document.getElementById("cont_ctv").checked = !!pt.cont_ctv;
+            document.getElementById("cont_ptv").checked = !!pt.cont_ptv;
+            document.getElementById("cont_ai_oar").checked = !!pt.cont_ai_oar;
+            document.getElementById("cont_peer_review").checked = !!pt.cont_peer_review;
+            document.getElementById("cont_status").value = pt.cont_status || "Pending";
+
+            // Populate OAR Checkbox elements based on patient's site
+            renderOARChecklist(pt.site, pt.oars || []);
+
+            // TPS & QA
+            document.getElementById("tps_tech").value = pt.tps_tech || "VMAT";
+            document.getElementById("tps_dose_total").value = pt.tps_dose_total || "";
+            document.getElementById("tps_fractions").value = pt.tps_fractions || "";
+            document.getElementById("tps_ref_pt").value = pt.tps_ref_pt || "";
+            document.getElementById("tps_ptv_v95").value = pt.tps_ptv_v95 || "";
+            document.getElementById("tps_ptv_max").value = pt.tps_ptv_max || "";
+            document.getElementById("tps_chk_collision").checked = !!pt.tps_chk_collision;
+            document.getElementById("tps_chk_density").checked = !!pt.tps_chk_density;
+            document.getElementById("tps_chk_limit").checked = !!pt.tps_chk_limit;
+            document.getElementById("tps_chk_secondary").checked = !!pt.tps_chk_secondary;
+            document.getElementById("qa_device").value = pt.qa_device || "ArcCheck";
+            document.getElementById("qa_gamma").value = pt.qa_gamma || "";
+            document.getElementById("qa_point_dose").value = pt.qa_point_dose || "";
+            document.getElementById("plan_status").value = pt.plan_status || "Pending";
+
+            // Populate clinical QUANTEC reference tables
+            renderQUANTECReference(pt.site);
+
+            // Logs & Review
+            document.getElementById("tx_igrt").value = pt.tx_igrt || "Daily CBCT";
+            document.getElementById("tx_shifts").value = pt.tx_shifts || "";
+            document.getElementById("tox_dermatitis").value = pt.tox_dermatitis || "Grade 0";
+            document.getElementById("tox_dysphagia").value = pt.tox_dysphagia || "Grade 0";
+            document.getElementById("tox_fatigue").value = pt.tox_fatigue || "Grade 0";
+            document.getElementById("tox_diarrhea").value = pt.tox_diarrhea || "Grade 0";
+            document.getElementById("tx_status").value = pt.tx_status || "Pending";
+
+            // Calculations
+            calculateInflammatoryIndices();
+            renderFractionGrid();
+            updateFractionDisplays();
+            calculateTrends();
+
+            // Refresh sidebar UI active styling
+            document.querySelectorAll(".patient-card").forEach(card => {
+                card.classList.remove("active");
+            });
+            renderPatientList();
+        }
+
+        // Dynamically Render site immobilization device checklist
+        function renderImmobilizationChecklist(site, activeImmob) {
+            const container = document.getElementById("simImmobContainer");
+            if (!container) return;
+            container.innerHTML = "";
+
+            const devices = simImmobilizationPresets[site] || [];
+            devices.forEach(device => {
+                const item = document.createElement("label");
+                item.className = "checkbox-item";
+                
+                const isChecked = activeImmob.includes(device);
+                item.innerHTML = `
+                    <input type="checkbox" value="${device}" ${isChecked ? 'checked' : ''} onchange="saveImmobSelection()">
+                    ${device}
+                `;
+                container.appendChild(item);
+            });
+        }
+
+        function saveImmobSelection() {
+            if (!activePatientId) return;
+            const selected = [];
+            document.querySelectorAll("#simImmobContainer input[type='checkbox']").forEach(cb => {
+                if (cb.checked) selected.push(cb.value);
+            });
+
+            const pt = db.find(p => p.id === activePatientId);
+            if (pt) {
+                pt.sim_immob_selected = selected;
+                saveAndSyncPatient(pt);
+            }
+        }
+
+        // Dynamically Render site OAR checklist
+        function renderOARChecklist(site, activeOars) {
+            const container = document.getElementById("oarChecklistContainer");
+            container.innerHTML = "";
+
+            const oars = oarDatabase[site] || [];
+            oars.forEach(oar => {
+                const item = document.createElement("label");
+                item.className = "checkbox-item";
+                
+                const isChecked = activeOars.includes(oar);
+                item.innerHTML = `
+                    <input type="checkbox" value="${oar}" ${isChecked ? 'checked' : ''} onchange="saveOARSelection()">
+                    ${oar}
+                `;
+                container.appendChild(item);
+            });
+        }
+
+        // Render QUANTEC Reference tables
+        function renderQUANTECReference(site) {
+            const container = document.getElementById("quantecTableContainer");
+            const constraints = quantecDatabase[site] || [];
+
+            if (constraints.length === 0) {
+                container.innerHTML = "<p style='font-style:italic; font-size:0.8rem; color:var(--text-muted);'>No constraints defined for this site.</p>";
+                return;
+            }
+
+            let html = `
+                <table class="oar-constraint-table">
+                    <thead>
+                        <tr>
+                            <th>Organ at Risk</th>
+                            <th>QUANTEC Constraint Limit</th>
+                            <th>Clinical Endpoint</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+
+            constraints.forEach(c => {
+                html += `
+                    <tr>
+                        <td><strong>${c.organ}</strong></td>
+                        <td><span style="color:var(--danger); font-weight:600;">${c.constraint}</span></td>
+                        <td>${c.endpoint}</td>
+                    </tr>
+                `;
+            });
+
+            html += "</tbody></table>";
+            container.innerHTML = html;
+        }
+
+        // Save selected OAR checkbox array
+        function saveOARSelection() {
+            if (!activePatientId) return;
+            const selectedOars = [];
+            document.querySelectorAll("#oarChecklistContainer input[type='checkbox']").forEach(cb => {
+                if (cb.checked) selectedOars.push(cb.value);
+            });
+
+            const pt = db.find(p => p.id === activePatientId);
+            if (pt) {
+                pt.oars = selectedOars;
+                saveAndSyncPatient(pt);
+            }
+        }
+
+        // Callback for Primary Site Selector Change
+        function onSiteChange() {
+            const site = document.getElementById("pt_site").value;
+            renderOARChecklist(site, []);
+            renderImmobilizationChecklist(site, []);
+            renderQUANTECReference(site);
+            saveOARSelection();
+            saveImmobSelection();
+        }
+
+        // Write changes to memory cache and push to Active Database backend (Local vs Firestore)
+        function saveAndSyncPatient(pt) {
+            saveDatabase();
+            if (cloudSyncMode === "Firebase" && firestoreDb) {
+                firestoreDb.collection("patients").doc(pt.id).set(pt)
+                    .catch(err => {
+                        console.error("Firestore write failed, falling back to offline", err);
+                        setCloudStatus("error", "Sync Error");
+                    });
+            }
+        }
+
+        // Auto Save patient inputs to DB
+        function saveCurrentData() {
+            if (!activePatientId) return;
+            const pt = db.find(p => p.id === activePatientId);
+            if (!pt) return;
+
+            pt.cr = document.getElementById("pt_cr").value;
+            pt.name = document.getElementById("pt_name").value;
+            pt.age = parseInt(document.getElementById("pt_age").value) || 0;
+            pt.gender = document.getElementById("pt_gender").value;
+            pt.ecog = document.getElementById("pt_ecog").value;
+            pt.site = document.getElementById("pt_site").value;
+            pt.stage_t = document.getElementById("pt_stage_t").value;
+            pt.stage_n = document.getElementById("pt_stage_n").value;
+            pt.stage_m = document.getElementById("pt_stage_m").value;
+            pt.history = document.getElementById("pt_history").value;
+
+            // Labs (Pre)
+            pt.lab_hb = parseFloat(document.getElementById("lab_hb").value) || null;
+            pt.lab_plt = parseFloat(document.getElementById("lab_plt").value) || null;
+            pt.lab_wbc = parseFloat(document.getElementById("lab_wbc").value) || null;
+            pt.lab_anc = parseInt(document.getElementById("lab_anc").value) || null;
+            pt.lab_alc = parseInt(document.getElementById("lab_alc").value) || null;
+            pt.lab_amc = parseInt(document.getElementById("lab_amc").value) || null;
+            pt.lab_crp = parseFloat(document.getElementById("lab_crp").value) || null;
+            pt.lab_ldh = parseInt(document.getElementById("lab_ldh").value) || null;
+
+            // Labs (Post)
+            pt.lab_hb_post = parseFloat(document.getElementById("lab_hb_post").value) || null;
+            pt.lab_plt_post = parseFloat(document.getElementById("lab_plt_post").value) || null;
+            pt.lab_wbc_post = parseFloat(document.getElementById("lab_wbc_post").value) || null;
+            pt.lab_anc_post = parseInt(document.getElementById("lab_anc_post").value) || null;
+            pt.lab_alc_post = parseInt(document.getElementById("lab_alc_post").value) || null;
+            pt.lab_amc_post = parseInt(document.getElementById("lab_amc_post").value) || null;
+            pt.lab_crp_post = parseFloat(document.getElementById("lab_crp_post").value) || null;
+            pt.lab_ldh_post = parseInt(document.getElementById("lab_ldh_post").value) || null;
+
+            // Sim
+            pt.sim_pos_notes = document.getElementById("sim_pos_notes").value;
+            pt.sim_contrast = document.getElementById("sim_contrast").value;
+            pt.sim_slice = document.getElementById("sim_slice").value;
+            pt.sim_limits = document.getElementById("sim_limits").value;
+            pt.sim_status = document.getElementById("sim_status").value;
+
+            // Contouring
+            pt.cont_gtv = document.getElementById("cont_gtv").checked;
+            pt.cont_ctv = document.getElementById("cont_ctv").checked;
+            pt.cont_ptv = document.getElementById("cont_ptv").checked;
+            pt.cont_ai_oar = document.getElementById("cont_ai_oar").checked;
+            pt.cont_peer_review = document.getElementById("cont_peer_review").checked;
+            pt.cont_status = document.getElementById("cont_status").value;
+
+            // Planning & QA
+            pt.tps_tech = document.getElementById("tps_tech").value;
+            pt.tps_dose_total = parseFloat(document.getElementById("tps_dose_total").value) || null;
+            pt.tps_fractions = parseInt(document.getElementById("tps_fractions").value) || null;
+            pt.tps_ref_pt = document.getElementById("tps_ref_pt").value;
+            pt.tps_ptv_v95 = parseFloat(document.getElementById("tps_ptv_v95").value) || null;
+            pt.tps_ptv_max = parseFloat(document.getElementById("tps_ptv_max").value) || null;
+            pt.tps_chk_collision = document.getElementById("tps_chk_collision").checked;
+            pt.tps_chk_density = document.getElementById("tps_chk_density").checked;
+            pt.tps_chk_limit = document.getElementById("tps_chk_limit").checked;
+            pt.tps_chk_secondary = document.getElementById("tps_chk_secondary").checked;
+            pt.qa_device = document.getElementById("qa_device").value;
+            pt.qa_gamma = parseFloat(document.getElementById("qa_gamma").value) || null;
+            pt.qa_point_dose = parseFloat(document.getElementById("qa_point_dose").value) || null;
+            pt.plan_status = document.getElementById("plan_status").value;
+
+            // Log
+            pt.tx_igrt = document.getElementById("tx_igrt").value;
+            pt.tx_shifts = document.getElementById("tx_shifts").value;
+            pt.tox_dermatitis = document.getElementById("tox_dermatitis").value;
+            pt.tox_dysphagia = document.getElementById("tox_dysphagia").value;
+            pt.tox_fatigue = document.getElementById("tox_fatigue").value;
+            pt.tox_diarrhea = document.getElementById("tox_diarrhea").value;
+            pt.tx_status = document.getElementById("tx_status").value;
+
+            saveAndSyncPatient(pt);
+            updateFractionDisplays();
+            calculateTrends();
+            
+            // Re-update header title content values silently
+            const stage = determinePatientStage(pt);
+            document.getElementById("hdr_badge").innerText = stage;
+            updateHdrBadgeClass(stage);
+        }
+
+        function updateStageBadge() {
+            if (!activePatientId) return;
+            const pt = db.find(p => p.id === activePatientId);
+            const stage = determinePatientStage(pt);
+            document.getElementById("hdr_badge").innerText = stage;
+            updateHdrBadgeClass(stage);
+            renderPatientList();
+        }
+
+        function updateHdrBadgeClass(stage) {
+            const badge = document.getElementById("hdr_badge");
+            if (!badge) return;
+            badge.className = "status-badge";
+            if (stage === "Simulation") badge.classList.add("status-sim");
+            if (stage === "Contouring") badge.classList.add("status-contour");
+            if (stage === "Planning") badge.classList.add("status-planning");
+            if (stage === "QA") badge.classList.add("status-qa");
+            if (stage === "Treating") badge.classList.add("status-treating");
+            if (stage === "Completed") badge.classList.add("status-completed");
+        }
+
+        // Calculate trends comparing pre and post values
+        function calculateTrends() {
+            const list = ["hb", "wbc", "plt", "anc", "alc", "amc", "crp", "ldh"];
+            list.forEach(item => {
+                const pre = parseFloat(document.getElementById(`lab_${item}`).value);
+                const post = parseFloat(document.getElementById(`lab_${item}_post`).value);
+                const badge = document.getElementById(`trend_${item}`);
+
+                if (isNaN(pre) || isNaN(post)) {
+                    badge.innerText = "N/A";
+                    badge.className = "trend-badge trend-stable";
+                    return;
+                }
+
+                const diff = post - pre;
+                const pct = (diff / pre) * 100;
+
+                // Threshold: 5% change
+                if (pct > 5) {
+                    if (item === "hb" || item === "plt" || item === "alc") {
+                        badge.innerText = "Improving";
+                        badge.className = "trend-badge trend-down"; // green
+                    } else {
+                        badge.innerText = "Elevating";
+                        badge.className = "trend-badge trend-up"; // red
+                    }
+                } else if (pct < -5) {
+                    if (item === "hb" || item === "plt" || item === "alc" || item === "anc") {
+                        badge.innerText = "Dropping";
+                        badge.className = "trend-badge trend-up"; // red
+                    } else {
+                        badge.innerText = "Decreasing";
+                        badge.className = "trend-badge trend-down"; // green
+                    }
+                } else {
+                    badge.innerText = "Stable";
+                    badge.className = "trend-badge trend-stable";
+                }
+            });
+        }
+
+        // Calculate Inflammatory Indices: SII, SIRI, PIV for both Baseline and Post
+        function calculateInflammatoryIndices() {
+            // Baseline Calculations
+            const pltVal = parseFloat(document.getElementById("lab_plt").value);
+            const ancVal = parseInt(document.getElementById("lab_anc").value);
+            const alcVal = parseInt(document.getElementById("lab_alc").value);
+            const amcVal = parseInt(document.getElementById("lab_amc").value);
+
+            const siiBox = document.getElementById("val_sii");
+            const siriBox = document.getElementById("val_siri");
+            const pivBox = document.getElementById("val_piv");
+
+            // Post-treatment Calculations
+            const pltValPost = parseFloat(document.getElementById("lab_plt_post").value);
+            const ancValPost = parseInt(document.getElementById("lab_anc_post").value);
+            const alcValPost = parseInt(document.getElementById("lab_alc_post").value);
+            const amcValPost = parseInt(document.getElementById("lab_amc_post").value);
+
+            const siiBoxPost = document.getElementById("val_sii_post");
+            const siriBoxPost = document.getElementById("val_siri_post");
+            const pivBoxPost = document.getElementById("val_piv_post");
+
+            // Compute Pre
+            if (pltVal && ancVal && alcVal) {
+                siiBox.innerText = Math.round((pltVal * 1000 * ancVal) / alcVal);
+            } else { siiBox.innerText = "-"; }
+
+            if (ancVal && amcVal && alcVal) {
+                siriBox.innerText = ((ancVal * amcVal) / alcVal).toFixed(2);
+            } else { siriBox.innerText = "-"; }
+
+            if (pltVal && ancVal && amcVal && alcVal) {
+                pivBox.innerText = Math.round((pltVal * 1000 * ancVal * amcVal) / alcVal);
+            } else { pivBox.innerText = "-"; }
+
+            // Compute Post
+            if (pltValPost && ancValPost && alcValPost) {
+                siiBoxPost.innerText = Math.round((pltValPost * 1000 * ancValPost) / alcValPost);
+            } else { siiBoxPost.innerText = "-"; }
+
+            if (ancValPost && amcValPost && alcValPost) {
+                siriBoxPost.innerText = ((ancValPost * amcValPost) / alcValPost).toFixed(2);
+            } else { siriBoxPost.innerText = "-"; }
+
+            if (pltValPost && ancValPost && amcValPost && alcValPost) {
+                pivBoxPost.innerText = Math.round((pltValPost * 1000 * ancValPost * amcValPost) / alcValPost);
+            } else { pivBoxPost.innerText = "-"; }
+        }
+
+        // Render Fraction cells calendar grid
+        function renderFractionGrid() {
+            if (!activePatientId) return;
+            const pt = db.find(p => p.id === activePatientId);
+            if (!pt) return;
+
+            const container = document.getElementById("fractionGridContainer");
+            container.innerHTML = "";
+
+            const total = pt.tps_fractions || 0;
+            const current = pt.fractions_delivered || 0;
+
+            for (let i = 1; i <= total; i++) {
+                const cell = document.createElement("div");
+                cell.className = `fraction-cell ${i <= current ? 'delivered' : ''}`;
+                cell.innerText = i;
+                cell.onclick = () => toggleFractionCell(i);
+                container.appendChild(cell);
+            }
+        }
+
+        // Toggle fraction cells sequentially
+        function toggleFractionCell(cellIndex) {
+            if (!activePatientId) return;
+            const pt = db.find(p => p.id === activePatientId);
+            if (!pt) return;
+
+            let current = pt.fractions_delivered || 0;
+
+            if (cellIndex === current) {
+                // If clicking the current active fraction, toggle it down
+                pt.fractions_delivered = current - 1;
+            } else {
+                // Set fractions delivered count directly to selected index
+                pt.fractions_delivered = cellIndex;
+            }
+
+            // Sync delivery statuses
+            const total = pt.tps_fractions || 0;
+            if (total > 0 && pt.fractions_delivered === total) {
+                pt.tx_status = "Completed";
+                document.getElementById("tx_status").value = "Completed";
+            } else if (pt.fractions_delivered > 0) {
+                pt.tx_status = "Treating";
+                document.getElementById("tx_status").value = "Treating";
+            }
+
+            saveAndSyncPatient(pt);
+            updateFractionDisplays();
+            renderFractionGrid();
+            updateStageBadge();
+        }
+
+        // Set all fractions delivered or pending
+        function setAllFractions(status) {
+            if (!activePatientId) return;
+            const pt = db.find(p => p.id === activePatientId);
+            if (!pt) return;
+
+            const total = pt.tps_fractions || 0;
+            pt.fractions_delivered = status ? total : 0;
+            pt.tx_status = status ? "Completed" : "Pending";
+            document.getElementById("tx_status").value = pt.tx_status;
+
+            saveAndSyncPatient(pt);
+            updateFractionDisplays();
+            renderFractionGrid();
+            updateStageBadge();
+        }
+
+        // Refresh Delivered fractions UI items
+        function updateFractionDisplays() {
+            if (!activePatientId) return;
+            const pt = db.find(p => p.id === activePatientId);
+            if (!pt) return;
+
+            const total = pt.tps_fractions || 0;
+            const current = pt.fractions_delivered || 0;
+
+            document.getElementById("fractionCounterDisplay").innerText = `${current} / ${total}`;
+            updateProgressBar();
+        }
+
+        function updateProgressBar() {
+            if (!activePatientId) return;
+            const pt = db.find(p => p.id === activePatientId);
+            if (!pt) return;
+
+            const total = parseInt(document.getElementById("tps_fractions").value) || 0;
+            const current = pt.fractions_delivered || 0;
+            
+            let pct = 0;
+            if (total > 0) {
+                pct = Math.min(100, Math.round((current / total) * 100));
+            }
+
+            document.getElementById("progressBar").style.width = `${pct}%`;
+        }
+
+        // Filter and search logic
+        function filterPatients() {
+            renderPatientList();
+        }
+
+        // Patient Registration Modals
+        function openAddPatientModal() {
+            document.getElementById("addPatientModal").classList.add("active");
+        }
+
+        function closeAddPatientModal() {
+            document.getElementById("addPatientModal").classList.remove("active");
+            document.getElementById("new_cr").value = "";
+            document.getElementById("new_name").value = "";
+            document.getElementById("new_age").value = "";
+        }
+
+        function saveNewPatient() {
+            const cr = document.getElementById("new_cr").value.trim();
+            const name = document.getElementById("new_name").value.trim();
+            const age = parseInt(document.getElementById("new_age").value) || 0;
+            const gender = document.getElementById("new_gender").value;
+            const site = document.getElementById("new_site").value;
+
+            if (!cr || !name) {
+                alert("CR Number and Name are required.");
+                return;
+            }
+
+            const newPt = {
+                id: "pt_" + Date.now(),
+                cr: cr,
+                name: name,
+                age: age,
+                gender: gender,
+                site: site,
+                ecog: "0",
+                stage_t: "Tx",
+                stage_n: "Nx",
+                stage_m: "M0",
+                history: "",
+                oars: [],
+                sim_immob_selected: [],
+                sim_status: "Pending",
+                cont_status: "Pending",
+                plan_status: "Pending",
+                tx_status: "Pending",
+                fractions_delivered: 0
+            };
+
+            db.push(newPt);
+            saveAndSyncPatient(newPt);
+            closeAddPatientModal();
+            renderPatientList();
+            selectPatient(newPt.id);
+        }
+
+        // Delete Active Patient
+        function deleteActivePatient() {
+            if (userRole !== "Admin") {
+                alert("Unauthorized Action: Deleting patient records is restricted to administrators.");
+                return;
+            }
+
+            if (!activePatientId) return;
+            const pt = db.find(p => p.id === activePatientId);
+            if (!pt) return;
+
+            if (confirm(`ADMIN ACTION REQUIRED:\nAre you sure you want to permanently delete patient "${pt.name}"?`)) {
+                // If cloud synchronization is active, delete from Firestore
+                if (cloudSyncMode === "Firebase" && firestoreDb) {
+                    firestoreDb.collection("patients").doc(activePatientId).delete()
+                        .catch(err => alert("Error deleting from cloud: " + err.message));
+                }
+
+                // Delete locally
+                db = db.filter(p => p.id !== activePatientId);
+                saveDatabase();
+                
+                // Select first remaining patient
+                if (db.length > 0) {
+                    selectPatient(db[0].id);
+                } else {
+                    selectPatient(null);
+                }
+                renderPatientList();
+            }
+        }
+
+        // Database backups (Export JSON)
+        function exportDatabase() {
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(db, null, 2));
+            const dlAnchor = document.createElement("a");
+            dlAnchor.setAttribute("href", dataStr);
+            dlAnchor.setAttribute("download", `oncoflow_database_backup_${new Date().toISOString().slice(0,10)}.json`);
+            document.body.appendChild(dlAnchor);
+            dlAnchor.click();
+            dlAnchor.remove();
+        }
+
+        // Database backups (Restore JSON)
+        function triggerImport() {
+            document.getElementById("importFile").click();
+        }
+
+        function importDatabase(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const parsed = JSON.parse(e.target.result);
+                    if (Array.isArray(parsed)) {
+                        db = parsed;
+                        saveDatabase();
+                        
+                        // If Cloud Firestore is connected, push restored items to Cloud
+                        if (cloudSyncMode === "Firebase" && firestoreDb) {
+                            parsed.forEach(pt => {
+                                firestoreDb.collection("patients").doc(pt.id).set(pt);
+                            });
+                        }
+
+                        renderPatientList();
+                        if (db.length > 0) {
+                            selectPatient(db[0].id);
+                        } else {
+                            selectPatient(null);
+                        }
+                        alert("Database restored successfully.");
+                    } else {
+                        alert("Invalid JSON format. Expected an array of patients.");
+                    }
+                } catch(err) {
+                    alert("Error parsing JSON file: " + err.message);
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        /* ----------------------------------------------------
+           ADMIN SECURITY & LOCK CONTROL SYSTEM
+           ---------------------------------------------------- */
+        function toggleRoleMode() {
+            if (userRole === "Admin") {
+                userRole = "Standard";
+                setRoleStatus("Standard");
+                alert("Switched to Standard Access Mode. Administrative actions are now locked.");
+            } else {
+                const pin = prompt("Enter Administrative Access PIN:");
+                if (pin === adminPINCode) {
+                    userRole = "Admin";
+                    setRoleStatus("Admin");
+                    alert("Admin Access Unlocked. Administrative actions (Patient Deletion) are enabled.");
+                } else if (pin !== null) {
+                    alert("Incorrect PIN. Access Denied.");
+                }
+            }
+            updateDeleteButtonVisibility();
+        }
+
+        function setRoleStatus(role) {
+            const indicator = document.getElementById("roleIndicator");
+            const label = document.getElementById("roleLabel");
+            const icon = document.getElementById("roleLockIcon");
+            
+            if (!indicator || !label || !icon) return;
+            
+            if (role === "Admin") {
+                label.innerText = "Admin Access";
+                indicator.className = "cloud-badge cloud-connected";
+                icon.innerHTML = '<path d="M12 17c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm6-9h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6h1.9c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm0 12H6V10h12v10z"/>';
+            } else {
+                label.innerText = "Standard Access";
+                indicator.className = "cloud-badge cloud-local";
+                icon.innerHTML = '<path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/>';
+            }
+            
+            // Sync with settings page element if active
+            const selectEl = document.getElementById("cfg_user_role");
+            if (selectEl) selectEl.value = role;
+        }
+
+        function updateDeleteButtonVisibility() {
+            const btn = document.getElementById("deletePatientBtn");
+            if (!btn) return;
+            if (activePatientId && userRole === "Admin") {
+                btn.style.display = "inline-flex";
+            } else {
+                btn.style.display = "none";
+            }
+        }
+
+        /* ----------------------------------------------------
+           SETTINGS TAB SPECIFIC CONTROL FUNCTIONS
+           ---------------------------------------------------- */
+        function updateAdminPIN() {
+            const newPin = document.getElementById("cfg_admin_pin").value.trim();
+            if (newPin.length > 0) {
+                adminPINCode = newPin;
+                localStorage.setItem("oncoflow_admin_pin", newPin);
+            }
+        }
+
+        function changeRoleModeFromSettings() {
+            const val = document.getElementById("cfg_user_role").value;
+            if (val === "Standard") {
+                userRole = "Standard";
+                setRoleStatus("Standard");
+                updateDeleteButtonVisibility();
+                alert("Switched to Standard Access.");
+            } else {
+                const pin = prompt("Enter Administrative Access PIN:");
+                if (pin === adminPINCode) {
+                    userRole = "Admin";
+                    setRoleStatus("Admin");
+                    updateDeleteButtonVisibility();
+                    alert("Admin Access Unlocked.");
+                } else {
+                    document.getElementById("cfg_user_role").value = userRole;
+                    alert("Incorrect PIN. Access Denied.");
+                }
+            }
+        }
+
+        function toggleCloudConfigFieldsSettings() {
+            const mode = document.getElementById("cfg_cloud_mode_settings").value;
+            const container = document.getElementById("firebaseConfigFieldsSettings");
+            if (mode === "Firebase") {
+                container.style.display = "flex";
+            } else {
+                container.style.display = "none";
+            }
+        }
+
+        function saveCloudSettingsFromSettings() {
+            const mode = document.getElementById("cfg_cloud_mode_settings").value;
+            localStorage.setItem("oncoflow_sync_mode", mode);
+
+            if (mode === "Local") {
+                if (firestoreUnsubscribe) {
+                    firestoreUnsubscribe();
+                    firestoreUnsubscribe = null;
+                }
+                firestoreDb = null;
+                cloudSyncMode = "Local";
+                setCloudStatus("local", "Local Storage");
+                alert("Cloud Sync disabled. Running on Local database.");
+                loadDatabase();
+                renderPatientList();
+                if (db.length > 0) selectPatient(db[0].id);
+                return;
+            }
+
+            const config = {
+                apiKey: document.getElementById("cfg_apiKey_settings").value.trim(),
+                authDomain: document.getElementById("cfg_authDomain_settings").value.trim(),
+                projectId: document.getElementById("cfg_projectId_settings").value.trim(),
+                storageBucket: document.getElementById("cfg_storageBucket_settings").value.trim(),
+                messagingSenderId: document.getElementById("cfg_messagingSenderId_settings").value.trim(),
+                appId: document.getElementById("cfg_appId_settings").value.trim()
+            };
+
+            if (!config.apiKey || !config.projectId) {
+                alert("API Key and Project ID are required to connect.");
+                return;
+            }
+
+            localStorage.setItem("oncoflow_firebase_config", JSON.stringify(config));
+            setCloudStatus("connecting", "Connecting...");
+
+            loadFirebaseSDK(() => {
+                connectFirebase(config);
+            });
+        }
+
+        function migrateLocalToCloudFromSettings() {
+            if (!confirm("This will upload all patients in your current local registry to the active Firebase Firestore collection. Proceed?")) {
+                return;
+            }
+
+            const config = {
+                apiKey: document.getElementById("cfg_apiKey_settings").value.trim(),
+                authDomain: document.getElementById("cfg_authDomain_settings").value.trim(),
+                projectId: document.getElementById("cfg_projectId_settings").value.trim(),
+                storageBucket: document.getElementById("cfg_storageBucket_settings").value.trim(),
+                messagingSenderId: document.getElementById("cfg_messagingSenderId_settings").value.trim(),
+                appId: document.getElementById("cfg_appId_settings").value.trim()
+            };
+
+            if (!config.apiKey || !config.projectId) {
+                alert("Please configure valid Firebase credentials first before migrating.");
+                return;
+            }
+
+            loadFirebaseSDK(() => {
+                try {
+                    let app;
+                    if (firebase.apps.length > 0) {
+                        app = firebase.apps[0];
+                    } else {
+                        app = firebase.initializeApp(config);
+                    }
+                    const migrateDb = firebase.firestore(app);
+                    
+                    db.forEach(pt => {
+                        migrateDb.collection("patients").doc(pt.id).set(pt);
+                    });
+
+                    alert("Migration complete. " + db.length + " patients uploaded successfully to Firestore.");
+                } catch(e) {
+                    alert("Migration failed: " + e.message);
+                }
+            });
+        }
+
+        function toggleInflammatoryCalculationsDisplay() {
+            hideCalculationsFlag = !hideCalculationsFlag;
+            localStorage.setItem("oncoflow_hide_calculations", hideCalculationsFlag);
+            
+            const container = document.getElementById("inflammatoryIndicesContainer");
+            const btn = document.getElementById("tblToggleCalculators");
+            
+            if (hideCalculationsFlag) {
+                container.style.display = "none";
+                btn.innerText = "Show Calculations";
+            } else {
+                container.style.display = "grid";
+                btn.innerText = "Hide Calculations";
+            }
+        }
+
+        function clearFullDatabase() {
+            if (userRole !== "Admin") {
+                alert("Access Denied: Administrator role is required to clear patient registries.");
+                return;
+            }
+
+            if (confirm("CRITICAL WARNING: This will permanently delete ALL patient records from local storage (and cloud, if synced). This action cannot be undone. Proceed?")) {
+                if (cloudSyncMode === "Firebase" && firestoreDb) {
+                    db.forEach(pt => {
+                        firestoreDb.collection("patients").doc(pt.id).delete();
+                    });
+                }
+                db = [];
+                saveDatabase();
+                selectPatient(null);
+                renderPatientList();
+                alert("Database cleared successfully.");
+            }
+        }
+
+        /* ----------------------------------------------------
+           PRINT CHART PREPARATION SYSTEM
+           ---------------------------------------------------- */
+        function setupPrintListener() {
+            window.onbeforeprint = function() {
+                if (!activePatientId) return;
+                const pt = db.find(p => p.id === activePatientId);
+                if (!pt) return;
+
+                const block = document.getElementById("printPatientInfoBlock");
+                block.innerHTML = `
+                    <div><span>Patient Name:</span> ${pt.name}</div>
+                    <div><span>CR Number:</span> ${pt.cr}</div>
+                    <div><span>Age / Gender:</span> ${pt.age}y / ${pt.gender}</div>
+                    <div><span>Primary Disease Site:</span> ${pt.site}</div>
+                    <div><span>ECOG Status:</span> ECOG ${pt.ecog}</div>
+                    <div><span>Tumor Stage:</span> ${pt.stage_t || 'Tx'} ${pt.stage_n || 'Nx'} ${pt.stage_m || 'M0'}</div>
+                `;
+            };
+        }
+
+        /* ----------------------------------------------------
+           CLOUD SYNCHRONIZATION ENGINE (DYNAMIC COMPAT SDK)
+           ---------------------------------------------------- */
+        function openCloudModal() {
+            document.getElementById("cloudSettingsModal").classList.add("active");
+        }
+
+        function closeCloudModal() {
+            document.getElementById("cloudSettingsModal").classList.remove("active");
+        }
+
+        function getSavedFirebaseConfig() {
+            const saved = localStorage.getItem("oncoflow_firebase_config");
+            if (saved) {
+                try {
+                    return JSON.parse(saved);
+                } catch(e) {
+                    return null;
+                }
+            }
+            return null;
+        }
+
+        // Dynamic Loading of Firebase Compat SDKs (keeps offline app lightweight and offline-stable)
+        function loadFirebaseSDK(callback) {
+            if (window.firebase) {
+                callback();
+                return;
+            }
+
+            console.log("Loading Firebase SDKs dynamically...");
+            const scriptApp = document.createElement("script");
+            scriptApp.src = "https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js";
+            scriptApp.onload = () => {
+                const scriptStore = document.createElement("script");
+                scriptStore.src = "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js";
+                scriptStore.onload = callback;
+                scriptStore.onerror = () => setCloudStatus("error", "Load Error");
+                document.head.appendChild(scriptStore);
+            };
+            scriptApp.onerror = () => setCloudStatus("error", "Offline / Load Error");
+            document.head.appendChild(scriptApp);
+        }
+
+        // Connect Firebase client
+        function connectFirebase(config) {
+            try {
+                if (firestoreUnsubscribe) {
+                    firestoreUnsubscribe();
+                    firestoreUnsubscribe = null;
+                }
+
+                let app;
+                if (firebase.apps.length > 0) {
+                    app = firebase.apps[0];
+                } else {
+                    app = firebase.initializeApp(config);
+                }
+
+                firestoreDb = firebase.firestore(app);
+                cloudSyncMode = "Firebase";
+                setCloudStatus("connected", "Cloud Active");
+                alert("Connected successfully to Google Firebase Cloud Firestore.");
+
+                // Bind Real-Time Synchronization Listener
+                firestoreUnsubscribe = firestoreDb.collection("patients").onSnapshot(snapshot => {
+                    let updatedDb = [];
+                    snapshot.forEach(doc => {
+                        updatedDb.push({ id: doc.id, ...doc.data() });
+                    });
+                    
+                    if (updatedDb.length > 0) {
+                        db = updatedDb;
+                        saveDatabase(); // Save local copy
+                        renderPatientList();
+                        
+                        if (activePatientId) {
+                            const stillExists = db.some(p => p.id === activePatientId);
+                            if (stillExists) {
+                                selectPatient(activePatientId);
+                            } else {
+                                selectPatient(db[0].id);
+                            }
+                        }
+                    }
+                }, err => {
+                    console.error("Firestore listener failed", err);
+                    setCloudStatus("error", "Sync Denied");
+                });
+
+            } catch(e) {
+                console.error("Firebase connection error", e);
+                setCloudStatus("error", "Config Invalid");
+                alert("Connection failed: configuration parameters are invalid.");
+            }
+        }
+
+        // Change top header cloud badge status styles
+        function setCloudStatus(status, labelText) {
+            const indicator = document.getElementById("cloudIndicator");
+            const label = document.getElementById("cloudLabel");
+
+            if (!indicator || !label) return;
+
+            indicator.className = "cloud-badge";
+            label.innerText = labelText;
+
+            if (status === "local") indicator.classList.add("cloud-local");
+            if (status === "connected") indicator.classList.add("cloud-connected");
+            if (status === "connecting") indicator.classList.add("cloud-connecting");
+            if (status === "error") indicator.classList.add("cloud-error");
+        }
+    </script>
+</body>
+</html>

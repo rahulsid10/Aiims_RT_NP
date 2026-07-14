@@ -1,0 +1,5 @@
+.gemini/
+*.log
+scratch/
+browser/
+tasks/
