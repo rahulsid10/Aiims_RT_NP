@@ -2302,8 +2302,13 @@
             loadDatabase();
             renderPatientList();
             
-            // Check if Firebase cloud mode was previously configured and active
-            const savedMode = localStorage.getItem("oncoflow_sync_mode");
+            // Check if Firebase cloud mode was previously configured and active (defaulting to Firebase)
+            let savedMode = localStorage.getItem("oncoflow_sync_mode");
+            if (savedMode === null) {
+                savedMode = "Firebase";
+                localStorage.setItem("oncoflow_sync_mode", "Firebase");
+            }
+
             if (savedMode === "Firebase") {
                 const config = getSavedFirebaseConfig();
                 if (config) {
@@ -2413,7 +2418,7 @@
                 document.getElementById("cfg_user_role").value = userRole;
                 document.getElementById("cfg_admin_pin").value = adminPINCode;
 
-                const mode = localStorage.getItem("oncoflow_sync_mode") || "Local";
+                const mode = localStorage.getItem("oncoflow_sync_mode") || "Firebase";
                 document.getElementById("cfg_cloud_mode_settings").value = mode;
 
                 const config = getSavedFirebaseConfig();
@@ -3349,7 +3354,7 @@
             setCloudStatus("connecting", "Connecting...");
 
             loadFirebaseSDK(() => {
-                connectFirebase(config);
+                connectFirebase(config, true);
             });
         }
 
@@ -3461,16 +3466,25 @@
             document.getElementById("cloudSettingsModal").classList.remove("active");
         }
 
+        const DEFAULT_FIREBASE_CONFIG = {
+            apiKey: "AIzaSyBi7M5XZ45PdP8adJOJoRu2N5zwHjwXmh0",
+            authDomain: "aiims-ro-mg.firebaseapp.com",
+            projectId: "aiims-ro-mg",
+            storageBucket: "aiims-ro-mg.appspot.com",
+            messagingSenderId: "648900560158",
+            appId: "1:648900560158:web:18c22f57b5837eab2ab50f"
+        };
+
         function getSavedFirebaseConfig() {
             const saved = localStorage.getItem("oncoflow_firebase_config");
             if (saved) {
                 try {
                     return JSON.parse(saved);
                 } catch(e) {
-                    return null;
+                    return DEFAULT_FIREBASE_CONFIG;
                 }
             }
-            return null;
+            return DEFAULT_FIREBASE_CONFIG;
         }
 
         // Dynamic Loading of Firebase Compat SDKs (keeps offline app lightweight and offline-stable)
@@ -3495,7 +3509,7 @@
         }
 
         // Connect Firebase client
-        function connectFirebase(config) {
+        function connectFirebase(config, showPrompt = false) {
             try {
                 if (firestoreUnsubscribe) {
                     firestoreUnsubscribe();
@@ -3512,7 +3526,9 @@
                 firestoreDb = firebase.firestore(app);
                 cloudSyncMode = "Firebase";
                 setCloudStatus("connected", "Cloud Active");
-                alert("Connected successfully to Google Firebase Cloud Firestore.");
+                if (showPrompt) {
+                    alert("Connected successfully to Google Firebase Cloud Firestore.");
+                }
 
                 // Bind Real-Time Synchronization Listener
                 firestoreUnsubscribe = firestoreDb.collection("patients").onSnapshot(snapshot => {
