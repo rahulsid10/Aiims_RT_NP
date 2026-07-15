@@ -70,6 +70,7 @@
             padding: 24px;
             height: 100%;
             box-shadow: 4px 0 20px rgba(13, 148, 136, 0.02);
+            z-index: 1000;
         }
 
         .sidebar-header {
@@ -351,7 +352,7 @@
             align-items: center;
         }
 
-        /* Cloud and Role indicator badges styling */
+        /* Cloud indicator styling */
         .cloud-badge {
             display: flex;
             align-items: center;
@@ -806,15 +807,136 @@
             margin-top: 4px;
             font-style: italic;
         }
+
+        /* MOBILE RESPONSIVE DRAWER BACKDROP AND CSS */
+        .sidebar-backdrop {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-color: rgba(0, 0, 0, 0.35);
+            backdrop-filter: blur(3px);
+            z-index: 999;
+            display: none;
+        }
+        .sidebar-backdrop.open {
+            display: block;
+        }
+
+        /* RESPONSIVE MEDIA QUERIES FOR PHONES & TABLETS */
+        @media (max-width: 768px) {
+            body {
+                display: block;
+                overflow-y: auto;
+                height: 100vh;
+            }
+
+            .sidebar {
+                position: fixed;
+                left: -320px;
+                top: 0;
+                bottom: 0;
+                width: 300px;
+                box-shadow: 8px 0 25px rgba(0, 0, 0, 0.15);
+                transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+                z-index: 1000;
+            }
+
+            .sidebar.open {
+                left: 0;
+            }
+
+            .main-content {
+                height: 100vh;
+                display: flex;
+                flex-direction: column;
+            }
+
+            .app-header {
+                padding: 12px 16px;
+                flex-wrap: wrap;
+                gap: 10px;
+            }
+
+            .active-patient-summary {
+                width: calc(100% - 100px);
+            }
+
+            .active-patient-name {
+                font-size: 1.2rem;
+            }
+
+            .active-patient-meta {
+                font-size: 0.78rem;
+                flex-wrap: wrap;
+                gap: 6px 12px;
+            }
+
+            .header-actions {
+                width: 100%;
+                justify-content: flex-start;
+                overflow-x: auto;
+                padding-bottom: 5px;
+                gap: 8px;
+            }
+
+            .header-actions::-webkit-scrollbar {
+                height: 3px;
+            }
+
+            .tabs-nav {
+                padding: 0 16px;
+                overflow-x: auto;
+                white-space: nowrap;
+                display: flex;
+                flex-wrap: nowrap;
+                -webkit-overflow-scrolling: touch;
+            }
+
+            .tab-btn {
+                padding: 12px 16px;
+                font-size: 0.85rem;
+                flex-shrink: 0;
+            }
+
+            .work-area {
+                padding: 16px;
+            }
+
+            .form-grid {
+                grid-template-columns: 1fr;
+                gap: 12px;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr;
+                gap: 12px;
+            }
+
+            .glass-card {
+                padding: 16px;
+                margin-bottom: 16px;
+            }
+
+            .fraction-grid-container {
+                grid-template-columns: repeat(auto-fill, minmax(35px, 1fr));
+                gap: 6px;
+            }
+
+            .fraction-cell {
+                font-size: 0.78rem;
+            }
+        }
     </style>
 </head>
 <body>
+
+    <!-- MOBILE SIDEBAR DRAWER OVERLAY BACKDROP -->
+    <div class="sidebar-backdrop" id="sidebarBackdrop" onclick="toggleSidebarDrawer(false)"></div>
 
     <!-- SIDEBAR: PATIENT REGISTRY -->
     <div class="sidebar">
         <div class="sidebar-header">
             <h1 class="sidebar-title">
-                <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-2 10h-4v4h-2v-4H7v-2h4V7h2v4h4v2z"/></svg>
+                <svg viewBox="0 0 24 24" fill="currentColor"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-2 10h-4v4h-2v-4H7v-2h4V7h2v4h4v2z"/></svg>
                 OncoFlow
             </h1>
             <div class="sidebar-subtitle">AIIMS Radiation Oncology</div>
@@ -858,6 +980,12 @@
                 </div>
             </div>
             <div class="header-actions">
+                <!-- Hamburger menu toggle button for Mobile drawer -->
+                <button class="btn btn-secondary" id="btnSidebarToggle" style="display:none;" onclick="toggleSidebarDrawer(true)">
+                    <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"/></svg>
+                    Registry
+                </button>
+
                 <!-- Administrative Lock Settings -->
                 <div class="cloud-badge cloud-local" id="roleIndicator" onclick="toggleRoleMode()">
                     <svg id="roleLockIcon" viewBox="0 0 24 24" fill="currentColor" style="width: 18px; height: 18px;"><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/></svg>
@@ -2070,6 +2198,10 @@
         // Select Active Patient
         function selectPatient(id) {
             activePatientId = id;
+            
+            // Automatically close the sidebar drawer on mobile after selection to show the patient details
+            toggleSidebarDrawer(false);
+
             if (!id) {
                 document.getElementById("noPatientState").style.display = "flex";
                 document.getElementById("tabsNav").style.display = "none";
@@ -2203,6 +2335,21 @@
                 card.classList.remove("active");
             });
             renderPatientList();
+        }
+
+        // Slide-out sidebar menu toggle helper for responsive layouts
+        function toggleSidebarDrawer(open) {
+            const sidebar = document.querySelector(".sidebar");
+            const backdrop = document.getElementById("sidebarBackdrop");
+            if (sidebar && backdrop) {
+                if (open) {
+                    sidebar.classList.add("open");
+                    backdrop.classList.add("open");
+                } else {
+                    sidebar.classList.remove("open");
+                    backdrop.classList.remove("open");
+                }
+            }
         }
 
         // Dynamically Render site immobilization device checklist
