@@ -2413,8 +2413,10 @@
             // Set active panel
             document.getElementById(tabId).classList.add("active");
 
-            // If switching to Settings tab, sync configurations panel inputs
+            // If switching to Settings tab, hide the "No Patient" empty state overlay
             if (tabId === "tab-settings") {
+                document.getElementById("noPatientState").style.display = "none";
+                
                 document.getElementById("cfg_user_role").value = userRole;
                 document.getElementById("cfg_admin_pin").value = adminPINCode;
 
@@ -2431,6 +2433,9 @@
                     document.getElementById("cfg_appId_settings").value = config.appId || "";
                 }
                 toggleCloudConfigFieldsSettings();
+            } else if (!activePatientId) {
+                // If switching back to clinical tabs without an active patient, show "No Patient" state
+                document.getElementById("noPatientState").style.display = "flex";
             }
         }
 
@@ -2448,7 +2453,12 @@
             }
 
             if (!id) {
-                document.getElementById("noPatientState").style.display = "flex";
+                const settingsActive = document.getElementById("tab-settings").classList.contains("active");
+                if (!settingsActive) {
+                    document.getElementById("noPatientState").style.display = "flex";
+                } else {
+                    document.getElementById("noPatientState").style.display = "none";
+                }
                 document.getElementById("tabsNav").style.display = "none";
                 document.getElementById("deletePatientBtn").style.display = "none";
                 document.getElementById("printChartBtn").style.display = "none";
