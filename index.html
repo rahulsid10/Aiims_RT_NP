@@ -925,6 +925,45 @@
                 font-size: 0.78rem;
             }
         }
+        
+        /* Advanced Features Custom Styling */
+        .fraction-cell.calendar-day {
+            aspect-ratio: auto !important;
+            padding: 8px;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            height: 58px;
+            font-size: 0.78rem;
+            justify-content: space-between;
+            align-items: flex-start;
+        }
+        .fraction-cell.calendar-day .cell-date {
+            font-size: 0.65rem;
+            color: var(--text-secondary);
+            font-weight: 700;
+        }
+        .fraction-cell.calendar-day.delivered .cell-date {
+            color: #ccfbf1;
+        }
+        .fraction-cell.calendar-day.weekend {
+            background-color: var(--danger-bg);
+            color: var(--danger);
+            border-color: rgba(185, 28, 28, 0.15);
+            cursor: not-allowed;
+            align-items: center;
+            justify-content: center;
+        }
+        .fraction-cell.calendar-day.weekend:hover {
+            transform: none;
+            background-color: var(--danger-bg);
+        }
+        
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.4; }
+            100% { opacity: 1; }
+        }
     </style>
 </head>
 <body>
@@ -1132,7 +1171,12 @@
                             </select>
                         </div>
                         <div class="form-group full-width">
-                            <label>Clinical History & Histopathology</label>
+                            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 6px;">
+                                <label>Clinical History & Histopathology</label>
+                                <button class="btn btn-secondary" id="btn_dictate_history" style="padding:4px 8px; font-size:0.75rem; border-radius:6px; display:inline-flex; align-items:center; gap:4px;" type="button" onclick="startDictation('pt_history', 'btn_dictate_history')">
+                                    <span class="mic-icon" style="color:var(--text-secondary);">🎙️</span> Start Voice Note
+                                </button>
+                            </div>
                             <textarea id="pt_history" oninput="saveCurrentData()" placeholder="Enter HPE biopsy findings, receptor profiles, and clinical notes..."></textarea>
                         </div>
                     </div>
@@ -1249,7 +1293,12 @@
                             </div>
                         </div>
                         <div class="form-group full-width">
-                            <label>Patient Positioning & Instructions</label>
+                            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 6px;">
+                                <label>Patient Positioning & Instructions</label>
+                                <button class="btn btn-secondary" id="btn_dictate_sim" style="padding:4px 8px; font-size:0.75rem; border-radius:6px; display:inline-flex; align-items:center; gap:4px;" type="button" onclick="startDictation('sim_pos_notes', 'btn_dictate_sim')">
+                                    <span class="mic-icon" style="color:var(--text-secondary);">🎙️</span> Start Voice Note
+                                </button>
+                            </div>
                             <textarea id="sim_pos_notes" oninput="saveCurrentData()" placeholder="e.g. Supine, arms overhead holding T-grip; Bladder protocol: drink 500ml water 30 mins before simulation; Rectal protocol: empty rectum..."></textarea>
                         </div>
                     </div>
@@ -1416,6 +1465,89 @@
                     </div>
                 </div>
 
+                <!-- ADVANCED FEATURE: EQD2 & BED RADIOBIOLOGY CALCULATOR -->
+                <div class="glass-card">
+                    <h2 class="card-title">
+                        <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-2 10h-4v4h-2v-4H7v-2h4V7h2v4h4v2z"/></svg>
+                        EQD2 & BED Biological Dose Calculator (LQ Model)
+                    </h2>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>Dose Per Fraction (d, Gy)</label>
+                            <input type="number" step="0.01" id="rad_d" value="2.00" oninput="calculateLQBiologicalDose()">
+                        </div>
+                        <div class="form-group">
+                            <label>Number of Fractions (n)</label>
+                            <input type="number" id="rad_n" value="25" oninput="calculateLQBiologicalDose()">
+                        </div>
+                        <div class="form-group">
+                            <label>Tissue α/β Ratio (Gy)</label>
+                            <select id="rad_alpha_beta" onchange="onAlphaBetaPresetChange(); calculateLQBiologicalDose();">
+                                <option value="10">α/β = 10 Gy (Early Responding / Tumor Tissue)</option>
+                                <option value="3">α/β = 3 Gy (Late Responding Normal Tissue)</option>
+                                <option value="custom">Custom α/β Ratio</option>
+                            </select>
+                        </div>
+                        <div class="form-group" id="customAlphaBetaGroup" style="display:none;">
+                            <label>Custom α/β value (Gy)</label>
+                            <input type="number" step="0.1" id="rad_alpha_beta_custom" value="3.0" oninput="calculateLQBiologicalDose()">
+                        </div>
+                    </div>
+                    <div class="stats-grid" style="margin-top:20px;">
+                         <div class="stat-box">
+                             <div class="stat-value" id="rad_res_total_dose">50.00 Gy</div>
+                             <div class="stat-label">Total Nominal Dose</div>
+                         </div>
+                         <div class="stat-box">
+                             <div class="stat-value" id="rad_res_bed">83.33 Gy</div>
+                             <div class="stat-label">BED (Biologically Effective)</div>
+                         </div>
+                         <div class="stat-box">
+                             <div class="stat-value" id="rad_res_eqd2">50.00 Gy</div>
+                             <div class="stat-label">EQD2 (Equivalent to 2Gy/#)</div>
+                         </div>
+                    </div>
+                </div>
+
+                <!-- ADVANCED FEATURE: DRAG-AND-DROP DVH ANALYZER -->
+                <div class="glass-card">
+                    <h2 class="card-title">
+                        <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM19 18H6c-2.21 0-4-1.79-4-4 0-2.05 1.53-3.76 3.56-3.97l1.07-.11.5-.95C8.08 7.14 9.94 6 12 6c2.62 0 4.88 1.86 5.39 4.43l.3 1.5 1.53.11c1.56.1 2.78 1.41 2.78 2.96 0 1.65-1.35 3-3 3z"/></svg>
+                        Drag-and-Drop DVH Analyzer (Eclipse/Monaco Reports)
+                    </h2>
+                    <div id="dvh_drop_zone" style="border: 2px dashed var(--accent-teal); border-radius: 12px; padding: 24px; text-align: center; background-color: var(--bg-main); transition: all 0.2s ease; cursor: pointer;"
+                         ondragover="event.preventDefault(); this.style.backgroundColor='var(--accent-teal-glow)';"
+                         ondragleave="this.style.backgroundColor='var(--bg-main)';"
+                         ondrop="handleDVHDrop(event)">
+                        <p style="font-weight:700; color:var(--text-primary); margin-bottom:8px;">Drag & Drop DVH Text Report Here</p>
+                        <p style="font-size:0.8rem; color:var(--text-muted); margin-bottom:12px;">Accepts standard plain text (.txt) exports from your treatment planning systems</p>
+                        <input type="file" id="dvh_file_input" accept=".txt" style="display:none;" onchange="handleDVHSelect(event)">
+                        <div style="display:flex; justify-content:center; gap:10px;">
+                            <button class="btn btn-secondary" style="font-size:0.8rem; padding:8px 12px;" onclick="document.getElementById('dvh_file_input').click()">Browse File</button>
+                            <button class="btn" style="font-size:0.8rem; padding:8px 12px;" onclick="loadDemoDVHReport()">Load Demo DVH Report</button>
+                        </div>
+                    </div>
+                    <div id="dvh_report_container" style="margin-top:20px; display:none;">
+                        <h3 style="font-size:0.95rem; font-weight:700; color:var(--accent-teal); border-bottom:1px solid var(--border-color); padding-bottom:8px; margin-bottom:12px;">Parsed DVH Constraint Compliance Report</h3>
+                        <div class="comparison-table-wrapper">
+                            <table class="comparison-table" id="dvh_report_table">
+                                <thead>
+                                    <tr>
+                                        <th>Structure</th>
+                                        <th>Dose Parameter</th>
+                                        <th>Parsed Value</th>
+                                        <th>QUANTEC Constraint</th>
+                                        <th style="text-align:center;">Compliance Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="dvh_report_body">
+                                    <!-- Dynamically populated -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="glass-card">
                     <h2 class="card-title">
                         <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 17h-2v-2h2v2zm2.07-7.75l-.9.92C13.45 12.9 13 13.5 13 15h-2v-.5c0-1.1.45-2.1 1.17-2.83l1.24-1.26c.37-.36.59-.86.59-1.41 0-1.1-.9-2-2-2s-2 .9-2 2H7c0-2.76 2.24-5 5-5s5 2.24 5 5c0 1.04-.42 1.99-1.07 2.75z"/></svg>
@@ -1479,9 +1611,28 @@
             <div class="tab-content" id="tab-treating">
                 <div class="glass-card">
                     <h2 class="card-title">
-                        <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 14.5v-9l6 4.5-6 4.5z"/></svg>
-                        Fractionation Delivery Calendar Log
+                        <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-2 15H7v-2h10v2zm0-4H7v-2h10v2zm0-4H7V8h10v2z"/></svg>
+                        Interactive Treatment Calendar Heatmap
                     </h2>
+                    <div class="form-grid" style="margin-bottom:20px;">
+                        <div class="form-group">
+                            <label>Treatment Start Date</label>
+                            <input type="date" id="tx_start_date" onchange="onTxDateOrScheduleChange()">
+                        </div>
+                        <div class="form-group">
+                            <label>Weekly Schedule</label>
+                            <select id="tx_schedule" onchange="onTxDateOrScheduleChange()">
+                                <option value="Mon-Fri">Monday to Friday (5 days/week)</option>
+                                <option value="Mon-Sat">Monday to Saturday (6 days/week)</option>
+                                <option value="Everyday">Everyday (7 days/week)</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Projected Completion Date</label>
+                            <div id="tx_projected_completion" style="font-size:1.15rem; font-weight:800; color:var(--accent-teal); padding:10px 0;">-</div>
+                        </div>
+                    </div>
+
                     <div class="fraction-tracker">
                         <div class="form-group">
                             <label>Fractions Delivered</label>
@@ -1495,13 +1646,13 @@
                         </div>
                     </div>
 
-                    <!-- INTERACTIVE FRACTIONATION CALENDAR GRID -->
-                    <label style="margin-top: 15px; display:block;">Click to toggle fraction completion status:</label>
-                    <div class="fraction-grid-container" id="fractionGridContainer">
+                    <!-- INTERACTIVE CALENDAR GRID -->
+                    <label style="margin-top: 15px; display:block; font-weight:700; color:var(--text-secondary);">Click calendar dates below to log fraction delivery:</label>
+                    <div class="fraction-grid-container" id="fractionGridContainer" style="grid-template-columns: repeat(auto-fill, minmax(75px, 1fr)); gap: 10px; margin-top: 15px;">
                         <!-- Populated dynamically by JS -->
                     </div>
                     
-                    <div style="display:flex; gap:10px;">
+                    <div style="display:flex; gap:10px; margin-top:15px;">
                         <button class="btn btn-secondary" style="font-size:0.8rem; padding:8px 12px;" onclick="setAllFractions(true)">Mark All Completed</button>
                         <button class="btn btn-secondary" style="font-size:0.8rem; padding:8px 12px;" onclick="setAllFractions(false)">Reset All</button>
                     </div>
@@ -2330,6 +2481,16 @@
             document.getElementById("tox_fatigue").value = pt.tox_fatigue || "Grade 0";
             document.getElementById("tox_diarrhea").value = pt.tox_diarrhea || "Grade 0";
             document.getElementById("tx_status").value = pt.tx_status || "Pending";
+            
+            // Set default date values if they don't exist
+            if (!pt.tx_start_date) {
+                pt.tx_start_date = new Date().toISOString().slice(0, 10);
+            }
+            if (!pt.tx_schedule) {
+                pt.tx_schedule = "Mon-Fri";
+            }
+            document.getElementById("tx_start_date").value = pt.tx_start_date;
+            document.getElementById("tx_schedule").value = pt.tx_schedule;
 
             // Calculations
             calculateInflammatoryIndices();
@@ -2561,6 +2722,8 @@
             pt.tox_fatigue = document.getElementById("tox_fatigue").value;
             pt.tox_diarrhea = document.getElementById("tox_diarrhea").value;
             pt.tx_status = document.getElementById("tx_status").value;
+            pt.tx_start_date = document.getElementById("tx_start_date").value;
+            pt.tx_schedule = document.getElementById("tx_schedule").value;
 
             saveAndSyncPatient(pt);
             updateFractionDisplays();
@@ -2683,7 +2846,7 @@
             } else { pivBoxPost.innerText = "-"; }
         }
 
-        // Render Fraction cells calendar grid
+        // Render Fraction cells calendar grid with interactive heatmap calendar dates
         function renderFractionGrid() {
             if (!activePatientId) return;
             const pt = db.find(p => p.id === activePatientId);
@@ -2694,13 +2857,61 @@
 
             const total = pt.tps_fractions || 0;
             const current = pt.fractions_delivered || 0;
+            
+            const startDateStr = pt.tx_start_date || new Date().toISOString().slice(0,10);
+            const schedule = pt.tx_schedule || "Mon-Fri";
 
-            for (let i = 1; i <= total; i++) {
-                const cell = document.createElement("div");
-                cell.className = `fraction-cell ${i <= current ? 'delivered' : ''}`;
-                cell.innerText = i;
-                cell.onclick = () => toggleFractionCell(i);
-                container.appendChild(cell);
+            document.getElementById("tx_start_date").value = startDateStr;
+            document.getElementById("tx_schedule").value = schedule;
+
+            let currentDate = new Date(startDateStr);
+            let fractionCount = 0;
+            let dayLimit = 0; // Guard against infinite loop
+
+            const monthsShort = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
+            while (fractionCount < total && dayLimit < 150) {
+                dayLimit++;
+                const dayOfWeek = currentDate.getDay(); // 0 = Sunday, 6 = Saturday
+                let isTreatmentDay = true;
+
+                if (schedule === "Mon-Fri") {
+                    if (dayOfWeek === 0 || dayOfWeek === 6) isTreatmentDay = false;
+                } else if (schedule === "Mon-Sat") {
+                    if (dayOfWeek === 0) isTreatmentDay = false;
+                }
+
+                const dateStr = currentDate.getDate() + " " + monthsShort[currentDate.getMonth()];
+                
+                if (isTreatmentDay) {
+                    fractionCount++;
+                    const fNum = fractionCount;
+                    const cell = document.createElement("div");
+                    cell.className = `fraction-cell calendar-day ${fNum <= current ? 'delivered' : ''}`;
+                    cell.innerHTML = `
+                        <span style="font-weight:800;">#${fNum}</span>
+                        <span class="cell-date">${dateStr}</span>
+                    `;
+                    cell.onclick = () => toggleFractionCell(fNum);
+                    container.appendChild(cell);
+                } else {
+                    // Render weekend/rest day block
+                    const cell = document.createElement("div");
+                    cell.className = "fraction-cell calendar-day weekend";
+                    cell.innerHTML = `
+                        <span style="font-weight:700; font-size:0.68rem;">REST</span>
+                        <span class="cell-date" style="color:var(--danger);">${dateStr}</span>
+                    `;
+                    container.appendChild(cell);
+                }
+
+                // Projected completion is the date of the last fraction
+                if (fractionCount === total) {
+                    const compDateStr = currentDate.toLocaleDateString('en-IN', { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' });
+                    document.getElementById("tx_projected_completion").innerText = compDateStr;
+                }
+
+                currentDate.setDate(currentDate.getDate() + 1);
             }
         }
 
@@ -3267,6 +3478,289 @@
             if (status === "connected") indicator.classList.add("cloud-connected");
             if (status === "connecting") indicator.classList.add("cloud-connecting");
             if (status === "error") indicator.classList.add("cloud-error");
+        }
+        
+        /* ----------------------------------------------------
+           ADVANCED FEATURES CORE ENGINES & CALCULATION LOGIC
+           ---------------------------------------------------- */
+        
+        // Web Speech API Voice Dictation Trigger
+        let activeRecognition = null;
+        let activeRecognitionTargetId = null;
+
+        function startDictation(targetId, btnId) {
+            const btn = document.getElementById(btnId);
+            const targetInput = document.getElementById(targetId);
+
+            if (activeRecognition) {
+                activeRecognition.stop();
+                activeRecognition = null;
+                btn.innerHTML = `<span class="mic-icon">🎙️</span> Start Voice Note`;
+                btn.className = "btn btn-secondary";
+                btn.style.color = "var(--text-secondary)";
+                return;
+            }
+
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            if (!SpeechRecognition) {
+                alert("Speech Recognition API is not supported in this browser. Please use Microsoft Edge or Google Chrome.");
+                return;
+            }
+
+            const rec = new SpeechRecognition();
+            rec.continuous = true;
+            rec.interimResults = false;
+            rec.lang = 'en-US';
+
+            rec.onstart = function() {
+                btn.innerHTML = `<span class="mic-icon" style="color:white; animation: pulse 1s infinite;">🔴</span> Recording (Speak Now)`;
+                btn.className = "btn btn-danger";
+                btn.style.color = "white";
+                activeRecognition = rec;
+                activeRecognitionTargetId = targetId;
+            };
+
+            rec.onresult = function(event) {
+                const resultIndex = event.resultIndex;
+                const transcript = event.results[resultIndex][0].transcript;
+                targetInput.value = (targetInput.value + " " + transcript).trim();
+                saveCurrentData();
+            };
+
+            rec.onerror = function(err) {
+                console.error("Speech recognition error", err);
+                stopDictation(btnId);
+            };
+
+            rec.onend = function() {
+                stopDictation(btnId);
+            };
+
+            rec.start();
+        }
+
+        function stopDictation(btnId) {
+            const btn = document.getElementById(btnId);
+            if (btn) {
+                btn.innerHTML = `<span class="mic-icon">🎙️</span> Start Voice Note`;
+                btn.className = "btn btn-secondary";
+                btn.style.color = "var(--text-secondary)";
+            }
+            activeRecognition = null;
+        }
+
+        // Biological Dose Calculations (LQ Equations)
+        function onAlphaBetaPresetChange() {
+            const preset = document.getElementById("rad_alpha_beta").value;
+            const customGroup = document.getElementById("customAlphaBetaGroup");
+            if (preset === "custom") {
+                customGroup.style.display = "flex";
+            } else {
+                customGroup.style.display = "none";
+            }
+        }
+
+        function calculateLQBiologicalDose() {
+            const d = parseFloat(document.getElementById("rad_d").value) || 0;
+            const n = parseInt(document.getElementById("rad_n").value) || 0;
+            
+            const preset = document.getElementById("rad_alpha_beta").value;
+            let ab = 3.0;
+            if (preset === "custom") {
+                ab = parseFloat(document.getElementById("rad_alpha_beta_custom").value) || 3.0;
+            } else {
+                ab = parseFloat(preset);
+            }
+
+            const nominal = d * n;
+            const bed = nominal * (1 + d / ab);
+            const eqd2 = nominal * ((d + ab) / (2 + ab));
+
+            document.getElementById("rad_res_total_dose").innerText = nominal.toFixed(2) + " Gy";
+            document.getElementById("rad_res_bed").innerText = (nominal > 0 ? bed.toFixed(2) : "0.00") + " Gy";
+            document.getElementById("rad_res_eqd2").innerText = (nominal > 0 ? eqd2.toFixed(2) : "0.00") + " Gy";
+        }
+
+        // Drag and Drop DVH Parsing and Evaluation Engine
+        function handleDVHDrop(e) {
+            e.preventDefault();
+            document.getElementById("dvh_drop_zone").style.backgroundColor = "var(--bg-main)";
+            const file = e.dataTransfer.files[0];
+            if (file) parseDVHFile(file);
+        }
+
+        function handleDVHSelect(e) {
+            const file = e.target.files[0];
+            if (file) parseDVHFile(file);
+        }
+
+        function parseDVHFile(file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const text = e.target.result;
+                processDVHText(text);
+            };
+            reader.readAsText(file);
+        }
+
+        function processDVHText(text) {
+            const lines = text.split("\n");
+            let currentStructure = "";
+            const parsedData = {};
+
+            lines.forEach(line => {
+                const cleanLine = line.trim();
+                const structMatch = cleanLine.match(/Structure\s*(Name)?\s*:\s*(.+)/i) || cleanLine.match(/^Structure\s+(.+)/i);
+                if (structMatch) {
+                    currentStructure = structMatch[2] ? structMatch[2].trim() : structMatch[1].trim();
+                    parsedData[currentStructure] = {};
+                    return;
+                }
+
+                if (currentStructure) {
+                    const maxMatch = cleanLine.match(/Max\s*(Dose)?\s*[:=]?\s*([0-9.]+)\s*(Gy)?/i);
+                    const meanMatch = cleanLine.match(/Mean\s*(Dose)?\s*[:=]?\s*([0-9.]+)\s*(Gy)?/i);
+                    
+                    if (maxMatch) {
+                        parsedData[currentStructure].max = parseFloat(maxMatch[2]);
+                    }
+                    if (meanMatch) {
+                        parsedData[currentStructure].mean = parseFloat(meanMatch[2]);
+                    }
+                }
+            });
+
+            evaluateDVHCompliance(parsedData);
+        }
+
+        function evaluateDVHCompliance(parsedData) {
+            if (!activePatientId) return;
+            const pt = db.find(p => p.id === activePatientId);
+            if (!pt) return;
+
+            const constraints = quantecDatabase[pt.site] || [];
+            const tableBody = document.getElementById("dvh_report_body");
+            tableBody.innerHTML = "";
+
+            let matchesFound = 0;
+
+            constraints.forEach(c => {
+                let matchedKey = Object.keys(parsedData).find(k => {
+                    const nameA = k.toLowerCase().replace(/[^a-z0-9]/g, "");
+                    const nameB = c.organ.toLowerCase().replace(/[^a-z0-9]/g, "");
+                    return nameA.includes(nameB) || nameB.includes(nameA);
+                });
+
+                if (matchedKey) {
+                    matchesFound++;
+                    const isMean = c.constraint.toLowerCase().includes("mean");
+                    const parsedValue = isMean ? parsedData[matchedKey].mean : parsedData[matchedKey].max;
+
+                    if (parsedValue !== undefined && parsedValue !== null) {
+                        const constraintNumMatch = c.constraint.match(/([0-9.]+)/);
+                        const limitVal = constraintNumMatch ? parseFloat(constraintNumMatch[1]) : null;
+
+                        let passed = true;
+                        if (limitVal) {
+                            passed = parsedValue <= limitVal;
+                        }
+
+                        const row = document.createElement("tr");
+                        row.innerHTML = `
+                            <td><strong>${matchedKey}</strong></td>
+                            <td>${isMean ? 'Mean Dose' : 'Max Dose'}</td>
+                            <td><strong>${parsedValue.toFixed(2)} Gy</strong></td>
+                            <td>${c.constraint}</td>
+                            <td style="text-align:center;">
+                                <span class="status-badge ${passed ? 'status-completed' : 'status-sim'}">
+                                    ${passed ? 'PASSED' : 'FAILED'}
+                                </span>
+                            </td>
+                        `;
+                        tableBody.appendChild(row);
+                    }
+                }
+            });
+
+            if (matchesFound === 0) {
+                tableBody.innerHTML = `<tr><td colspan="5" style="text-align:center; font-style:italic; color:var(--text-muted);">No matching OAR structures found in the uploaded DVH report. Make sure structure names match target constraints (e.g. Spinal Cord, Heart, Brainstem).</td></tr>`;
+            }
+
+            document.getElementById("dvh_report_container").style.display = "block";
+        }
+
+        function loadDemoDVHReport() {
+            const pt = db.find(p => p.id === activePatientId);
+            if (!pt) return;
+            
+            let demoText = "";
+            if (pt.site === "Head & Neck") {
+                demoText = `
+Structure Name: Spinal Cord
+Max Dose (Gy): 42.50
+Mean Dose (Gy): 15.60
+
+Structure Name: Brainstem
+Max Dose (Gy): 51.40
+Mean Dose (Gy): 22.00
+
+Structure Name: Parotid Left
+Max Dose (Gy): 32.10
+Mean Dose (Gy): 23.40
+
+Structure Name: Mandible
+Max Dose (Gy): 64.50
+Mean Dose (Gy): 45.20
+`;
+            } else if (pt.site === "Gynecological" || pt.site === "Genitourinary (Prostate/Bladder)") {
+                demoText = `
+Structure Name: Rectum
+Max Dose (Gy): 74.20
+Mean Dose (Gy): 48.60
+V50Gy (%): 45.20
+V70Gy (%): 18.40
+
+Structure Name: Bladder
+Max Dose (Gy): 76.50
+Mean Dose (Gy): 52.10
+V50Gy (%): 48.10
+V70Gy (%): 26.50
+
+Structure Name: Femoral Head Left
+Max Dose (Gy): 45.30
+Mean Dose (Gy): 28.20
+`;
+            } else {
+                demoText = `
+Structure Name: Heart
+Max Dose (Gy): 22.40
+Mean Dose (Gy): 4.10
+
+Structure Name: Spinal Cord
+Max Dose (Gy): 32.50
+Mean Dose (Gy): 12.40
+
+Structure Name: Ipsilateral Lung
+Max Dose (Gy): 48.50
+Mean Dose (Gy): 16.40
+V20Gy (%): 18.20
+`;
+            }
+
+            processDVHText(demoText);
+        }
+
+        // Date or schedule changes handler
+        function onTxDateOrScheduleChange() {
+            if (!activePatientId) return;
+            const pt = db.find(p => p.id === activePatientId);
+            if (pt) {
+                pt.tx_start_date = document.getElementById("tx_start_date").value;
+                pt.tx_schedule = document.getElementById("tx_schedule").value;
+                saveAndSyncPatient(pt);
+                renderFractionGrid();
+                updateFractionDisplays();
+            }
         }
     </script>
 </body>
