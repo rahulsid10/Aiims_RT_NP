@@ -987,8 +987,7 @@
                 font-size: 0.68rem;
                 font-weight: 700;
                 cursor: pointer;
-                padding: 6px;
-                width: 30%;
+                width: 23%;
                 transition: color 0.2s ease;
             }
             .mobile-bottom-nav button svg {
@@ -1040,6 +1039,117 @@
             0% { opacity: 1; }
             50% { opacity: 0.4; }
             100% { opacity: 1; }
+        }
+
+        /* Clinical Documentation Templates Styling */
+        .sketchpad-container {
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            background: #ffffff;
+            padding: 10px;
+            display: inline-block;
+            margin-top: 8px;
+        }
+        .sketchpad-canvas {
+            border: 1px solid #cbd5e1;
+            border-radius: 4px;
+            background: #ffffff;
+            cursor: crosshair;
+            touch-action: none;
+        }
+        .sketchpad-controls {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+        .toxicity-grid-row {
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr;
+            gap: 10px;
+            align-items: center;
+            padding: 8px 0;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .toxicity-grid-header {
+            font-weight: 700;
+            color: var(--text-primary);
+            border-bottom: 2px solid var(--border-color);
+            padding-bottom: 6px;
+        }
+        .sub-sidebar-layout {
+            display: grid;
+            grid-template-columns: 250px 1fr;
+            gap: 20px;
+            margin-top: 15px;
+        }
+        @media (max-width: 768px) {
+            .sub-sidebar-layout {
+                grid-template-columns: 1fr;
+            }
+        }
+        .record-sidebar {
+            background-color: rgba(248, 250, 252, 0.6);
+            border-right: 1px solid var(--border-color);
+            padding-right: 15px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .record-list-item {
+            padding: 10px 12px;
+            border-radius: 8px;
+            background-color: #ffffff;
+            border: 1px solid var(--border-color);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .record-list-item:hover {
+            border-color: var(--accent-teal);
+            background-color: var(--accent-teal-glow);
+        }
+        .record-list-item.active {
+            background-color: var(--accent-teal);
+            color: #ffffff;
+            border-color: var(--accent-teal);
+        }
+        .record-list-item.active span {
+            color: #ffffff !important;
+        }
+        .btn-mini-danger {
+            background-color: rgba(185, 28, 28, 0.1);
+            color: var(--danger);
+            border: 1px solid rgba(185, 28, 28, 0.2);
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.7rem;
+            cursor: pointer;
+        }
+        .btn-mini-danger:hover {
+            background-color: var(--danger);
+            color: #ffffff;
+        }
+        .hmis-output-container {
+            margin-top: 20px;
+            background-color: #f8fafc;
+            border: 1px dashed var(--accent-teal);
+            border-radius: 12px;
+            padding: 16px;
+        }
+        .hmis-output-textarea {
+            width: 100%;
+            height: 150px;
+            font-family: monospace;
+            font-size: 0.8rem;
+            padding: 10px;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            resize: vertical;
+            background: #ffffff;
+            color: var(--text-primary);
+            margin-top: 10px;
         }
     </style>
 </head>
@@ -1146,6 +1256,10 @@
             <button class="tab-btn" onclick="switchTab('tab-treating')">
                 <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 14.5v-9l6 4.5-6 4.5z"/></svg>
                 Treatment & Review
+            </button>
+            <button class="tab-btn" onclick="switchTab('tab-consultations')">
+                <svg viewBox="0 0 24 24"><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/></svg>
+                Consults & Notes
             </button>
         </div>
 
@@ -1812,6 +1926,620 @@
                                 <option value="Completed">Treatment Course Completed</option>
                             </select>
                         </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB: CLINICAL DOCUMENTATION & CONSULTATIONS -->
+            <div class="tab-content" id="tab-consultations">
+                <div class="sub-sidebar-layout">
+                    <!-- Left Sidebar: Consult Menu & History -->
+                    <div class="record-sidebar">
+                        <div class="form-group" style="margin-bottom:15px;">
+                            <label style="font-weight:700;">Select Document Category</label>
+                            <select id="consult_category_selector" onchange="onConsultCategoryChange()" style="margin-top:6px;">
+                                <option value="opd-new">1. New Patient OPD Consultation</option>
+                                <option value="followup">2. Follow-up Consultation Log</option>
+                                <option value="chemo">3. Chemotherapy Cycle Note</option>
+                            </select>
+                        </div>
+                        
+                        <!-- List for Follow-up Visits (only visible when 'followup' selected) -->
+                        <div id="followup_records_list_container" style="display:none; flex-direction:column; gap:10px;">
+                            <div style="display:flex; justify-content:space-between; align-items:center;">
+                                <label style="font-weight:700; font-size:0.8rem;">Follow-up Visits</label>
+                                <button class="btn btn-secondary" style="padding:4px 8px; font-size:0.7rem;" onclick="addNewFollowUpRecord()">+ Add Visit</button>
+                            </div>
+                            <div id="followup_records_list" style="display:flex; flex-direction:column; gap:8px; max-height:300px; overflow-y:auto; padding-right:4px;">
+                                <!-- Populated dynamically -->
+                            </div>
+                        </div>
+
+                        <!-- List for Chemotherapy Cycles (only visible when 'chemo' selected) -->
+                        <div id="chemo_records_list_container" style="display:none; flex-direction:column; gap:10px;">
+                            <div style="display:flex; justify-content:space-between; align-items:center;">
+                                <label style="font-weight:700; font-size:0.8rem;">Chemo Cycles</label>
+                                <button class="btn btn-secondary" style="padding:4px 8px; font-size:0.7rem;" onclick="addNewChemoRecord()">+ Add Cycle</button>
+                            </div>
+                            <div id="chemo_records_list" style="display:flex; flex-direction:column; gap:8px; max-height:300px; overflow-y:auto; padding-right:4px;">
+                                <!-- Populated dynamically -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Right Panel: Active Template Content -->
+                    <div class="main-record-content" style="flex-grow:1;">
+                        <!-- SUB-PANEL 1: NEW PATIENT OPD CONSULTATION -->
+                        <div id="sub_panel_opd_new" class="glass-card" style="display:block; margin-bottom:15px;">
+                            <h2 class="card-title">New Patient OPD Consultation Chart</h2>
+                            <div class="form-grid">
+                                <div class="form-group">
+                                    <label>Consultation Date</label>
+                                    <input type="date" id="opd_consult_date" oninput="saveConsultationData()">
+                                </div>
+                                <div class="form-group">
+                                    <label>Referring Department / Hospital</label>
+                                    <input type="text" id="opd_referring_dept" placeholder="e.g. Surgical Oncology, AIIMS" oninput="saveConsultationData()">
+                                </div>
+                                <div class="form-group">
+                                    <label>Consulting Doctor</label>
+                                    <input type="text" id="opd_consultant" placeholder="e.g. Dr. Sid" oninput="saveConsultationData()">
+                                </div>
+                            </div>
+
+                            <div class="form-group" style="margin-top:15px;">
+                                <label>Diagnosis / Reason for Referral</label>
+                                <textarea id="opd_diag_reason" placeholder="State primary reason for oncology consult..." oninput="saveConsultationData()"></textarea>
+                            </div>
+
+                            <h3 style="font-size:0.95rem; font-weight:700; color:var(--accent-teal); margin-top:20px; border-bottom:1px solid var(--border-color); padding-bottom:6px;">Chronological Timeline (Onset of Symptoms → Biopsy → Staging)</h3>
+                            <div class="comparison-table-wrapper" style="margin-top:10px;">
+                                <table class="comparison-table" id="opd_timeline_table">
+                                    <thead>
+                                        <tr>
+                                            <th>Date / Duration</th>
+                                            <th>Symptom / Investigation / Diagnosis / Treatment</th>
+                                            <th>Key Finding / Outcome</th>
+                                            <th style="width:50px; text-align:center;">Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="opd_timeline_body">
+                                        <!-- Rows added dynamically -->
+                                    </tbody>
+                                </table>
+                            </div>
+                            <button class="btn btn-secondary" style="font-size:0.75rem; padding:6px 12px; margin-top:10px;" onclick="addTimelineMilestone()">+ Add Timeline Milestone</button>
+
+                            <div class="form-grid" style="margin-top:15px;">
+                                <div class="form-group">
+                                    <label>Presenting Symptoms</label>
+                                    <input type="text" id="opd_symptoms" placeholder="e.g. Painless breast lump" oninput="saveConsultationData()">
+                                </div>
+                                <div class="form-group">
+                                    <label>Symptoms Duration</label>
+                                    <input type="text" id="opd_duration" placeholder="e.g. 3 months" oninput="saveConsultationData()">
+                                </div>
+                                <div class="form-group">
+                                    <label>Relevant Comorbidities</label>
+                                    <input type="text" id="opd_comorbidities" placeholder="e.g. Hypertension, Type-2 Diabetes" oninput="saveConsultationData()">
+                                </div>
+                                <div class="form-group">
+                                    <label>ECOG Performance Status</label>
+                                    <select id="opd_ecog" onchange="saveConsultationData()">
+                                        <option value="0">ECOG 0 - Fully Active</option>
+                                        <option value="1">ECOG 1 - Restricted in strenuous activity</option>
+                                        <option value="2">ECOG 2 - Ambulatory, self-care active</option>
+                                        <option value="3">ECOG 3 - Limited self-care, bed/chair > 50%</option>
+                                        <option value="4">ECOG 4 - Completely disabled</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <h3 style="font-size:0.95rem; font-weight:700; color:var(--accent-teal); margin-top:20px; border-bottom:1px solid var(--border-color); padding-bottom:6px;">Diagnostic Workup Details</h3>
+                            <div class="form-grid" style="margin-top:10px;">
+                                <div class="form-group">
+                                    <label>Imaging Modality & Date</label>
+                                    <input type="text" id="opd_imaging_modality" placeholder="e.g. Contrast CT Chest, 2026-07-10" oninput="saveConsultationData()">
+                                </div>
+                                <div class="form-group full-width">
+                                    <label>Key Imaging Findings</label>
+                                    <textarea id="opd_imaging_findings" placeholder="Describe tumor lesions, lymph nodes, metastasis status..." oninput="saveConsultationData()"></textarea>
+                                </div>
+                                <div class="form-group">
+                                    <label>Endoscopy / Other Procedures</label>
+                                    <input type="text" id="opd_endoscopy" placeholder="e.g. Upper GI Endoscopy: growth at 30cm" oninput="saveConsultationData()">
+                                </div>
+                                <div class="form-group">
+                                    <label>Tumor Markers / Key Labs</label>
+                                    <input type="text" id="opd_labs" placeholder="e.g. CEA: 12.4 ng/ml (2026-07-12)" oninput="saveConsultationData()">
+                                </div>
+                            </div>
+
+                            <h3 style="font-size:0.95rem; font-weight:700; color:var(--accent-teal); margin-top:20px; border-bottom:1px solid var(--border-color); padding-bottom:6px;">Biopsy & Pathology Report</h3>
+                            <div class="form-grid" style="margin-top:10px;">
+                                <div class="form-group">
+                                    <label>Biopsy Date & Site</label>
+                                    <input type="text" id="opd_biopsy_site" placeholder="e.g. Right breast core biopsy, 2026-07-08" oninput="saveConsultationData()">
+                                </div>
+                                <div class="form-group">
+                                    <label>Histopathology Diagnosis</label>
+                                    <input type="text" id="opd_biopsy_diag" placeholder="e.g. Invasive ductal carcinoma (IDC)" oninput="saveConsultationData()">
+                                </div>
+                                <div class="form-group">
+                                    <label>Grade / Differentiation</label>
+                                    <input type="text" id="opd_biopsy_grade" placeholder="e.g. Scarff-Bloom-Richardson Grade II" oninput="saveConsultationData()">
+                                </div>
+                                <div class="form-group full-width">
+                                    <label>Relevance IHC / Molecular Profile</label>
+                                    <textarea id="opd_biopsy_ihc" placeholder="e.g. ER: Strong (80%), PR: Strong (60%), Her2: 1+ (Negative), Ki67: 15%" oninput="saveConsultationData()"></textarea>
+                                </div>
+                            </div>
+
+                            <h3 style="font-size:0.95rem; font-weight:700; color:var(--accent-teal); margin-top:20px; border-bottom:1px solid var(--border-color); padding-bottom:6px;">Clinical Examination & Site Annotator</h3>
+                            <div class="form-grid" style="margin-top:10px;">
+                                <div class="form-group">
+                                    <label>General Condition Notes</label>
+                                    <input type="text" id="opd_exam_general" placeholder="e.g. Conscious, oriented, hemodynamically stable" oninput="saveConsultationData()">
+                                </div>
+                                <div class="form-group">
+                                    <label>Regional Lymph Nodes</label>
+                                    <input type="text" id="opd_exam_nodes" placeholder="e.g. Right axillary level I lymph node palpable (2cm)" oninput="saveConsultationData()">
+                                </div>
+                                <div class="form-group full-width">
+                                    <label>Site-Specific / Local Examination Findings</label>
+                                    <textarea id="opd_exam_local" placeholder="Describe inspections, palpations, skin involvements..." oninput="saveConsultationData()"></textarea>
+                                </div>
+                                <div class="form-group full-width">
+                                    <label>Relevant Systemic Examination Notes</label>
+                                    <textarea id="opd_exam_systemic" placeholder="e.g. Chest: Clear, CVS: S1 S2 heard" oninput="saveConsultationData()"></textarea>
+                                </div>
+                            </div>
+                            
+                            <!-- INTERACTIVE SKETCHPAD CANVAS FOR LOCAL MAPPING -->
+                            <div class="form-group" style="margin-top:15px;">
+                                <label style="font-weight:700;">Tumor & Node Anatomical Annotator (Interactive Sketchpad)</label>
+                                <div class="sketchpad-container">
+                                    <canvas id="opd_sketchpad" class="sketchpad-canvas" width="500" height="300"></canvas>
+                                    <div class="sketchpad-controls">
+                                        <button class="btn btn-secondary" style="font-size:0.75rem; padding:6px 12px;" onclick="clearOPDSketchpad()">🧹 Clear Canvas</button>
+                                        <div style="display:flex; align-items:center; gap:8px; font-size:0.75rem;">
+                                            <span>Brush Color:</span>
+                                            <input type="color" id="opd_brush_color" value="#0d9488" style="width:30px; height:24px; border:none; cursor:pointer;" onchange="updateOPDBrushSettings()">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <h3 style="font-size:0.95rem; font-weight:700; color:var(--accent-teal); margin-top:20px; border-bottom:1px solid var(--border-color); padding-bottom:6px;">Provisional Diagnosis, Management & Radiotherapy Plan</h3>
+                            <div class="form-grid" style="margin-top:10px;">
+                                <div class="form-group">
+                                    <label>Staging System / Edition</label>
+                                    <input type="text" id="opd_stage_edition" placeholder="e.g. AJCC 8th Edition" oninput="saveConsultationData()">
+                                </div>
+                                <div class="form-group">
+                                    <label>Provisional Staging Stage</label>
+                                    <input type="text" id="opd_stage_prov" placeholder="e.g. Stage IIA (T2 N1 M0)" oninput="saveConsultationData()">
+                                </div>
+                            </div>
+                            <div class="form-group" style="margin-top:10px;">
+                                <label style="font-weight:700;">Provisional Management Plan Options:</label>
+                                <div class="checkbox-list" style="margin-top:8px;">
+                                    <label class="checkbox-item"><input type="checkbox" id="opd_plan_def" onchange="saveConsultationData()"> Definitive Treatment</label>
+                                    <label class="checkbox-item"><input type="checkbox" id="opd_plan_neo" onchange="saveConsultationData()"> Neoadjuvant Therapy</label>
+                                    <label class="checkbox-item"><input type="checkbox" id="opd_plan_adj" onchange="saveConsultationData()"> Adjuvant Treatment</label>
+                                    <label class="checkbox-item"><input type="checkbox" id="opd_plan_ccrt" onchange="saveConsultationData()"> Concurrent Chemoradiation (CCRT)</label>
+                                    <label class="checkbox-item"><input type="checkbox" id="opd_plan_pall" onchange="saveConsultationData()"> Palliative Care / Radiotherapy</label>
+                                    <label class="checkbox-item"><input type="checkbox" id="opd_plan_surv" onchange="saveConsultationData()"> Observation / Surveillance</label>
+                                    <label class="checkbox-item"><input type="checkbox" id="opd_plan_mdt" onchange="saveConsultationData()"> Multidisciplinary Tumour Board discussion</label>
+                                </div>
+                            </div>
+
+                            <div class="form-grid" style="margin-top:15px;">
+                                <div class="form-group">
+                                    <label>Radiotherapy Intent</label>
+                                    <input type="text" id="opd_rt_intent" placeholder="e.g. Adjuvant / Curative" oninput="saveConsultationData()">
+                                </div>
+                                <div class="form-group">
+                                    <label>RT Target Site / Dose</label>
+                                    <input type="text" id="opd_rt_target" placeholder="e.g. Breast + SCF, 50Gy / 25 fractions" oninput="saveConsultationData()">
+                                </div>
+                                <div class="form-group">
+                                    <label>Systemic / Chemo Plan</label>
+                                    <input type="text" id="opd_chemo_plan" placeholder="e.g. Concurrent Weekly Cisplatin 40mg/m2" oninput="saveConsultationData()">
+                                </div>
+                                <div class="form-group">
+                                    <label>Reassessment Interval & Planned Imaging</label>
+                                    <input type="text" id="opd_followup_plan" placeholder="e.g. Reassess in 6 weeks with PET-CT" oninput="saveConsultationData()">
+                                </div>
+                            </div>
+
+                            <!-- HMIS COPY-PASTE OUTBOX -->
+                            <div class="hmis-output-container">
+                                <div style="display:flex; justify-content:space-between; align-items:center;">
+                                    <h4 style="font-weight:700; color:var(--accent-teal); font-size:0.85rem;">📋 OPD Consultation Summary (Copy to Hospital HMIS)</h4>
+                                    <button class="btn" style="font-size:0.75rem; padding:6px 12px;" onclick="copyOPDNoteToClipboard()">Copy Note</button>
+                                </div>
+                                <textarea class="hmis-output-textarea" id="opd_hmis_textarea" readonly></textarea>
+                            </div>
+                        </div>
+
+                        <!-- SUB-PANEL 2: FOLLOW-UP CONSULTATION -->
+                        <div id="sub_panel_followup" class="glass-card" style="display:none; margin-bottom:15px;">
+                            <div id="followup_empty_state" style="display:none; text-align:center; padding:40px; color:var(--text-muted);">
+                                <h3>No Follow-up Visit Selected</h3>
+                                <p style="font-size:0.8rem; margin-top:10px;">Please click the <strong>+ Add Visit</strong> button on the left sidebar to start logging post-treatment follow-up consultations.</p>
+                                <button class="btn btn-secondary" style="margin-top:15px;" onclick="addNewFollowUpRecord()">+ Add New Visit</button>
+                            </div>
+                            <div id="followup_form_content" style="display:block;">
+                                <div style="display:flex; justify-content:space-between; align-items:center;">
+                                    <h2 class="card-title" id="followup_title_display">Post-Treatment Follow-up OPD Visit</h2>
+                                    <button class="btn-mini-danger" id="btn_delete_followup" onclick="deleteActiveFollowUp()">Delete Visit Record</button>
+                                </div>
+                            <div class="form-grid" style="margin-top:10px;">
+                                <div class="form-group">
+                                    <label>Follow-up Visit Date</label>
+                                    <input type="date" id="fu_date" oninput="saveConsultationData()">
+                                </div>
+                                <div class="form-group">
+                                    <label>Time Since Treatment Completion</label>
+                                    <input type="text" id="fu_time_since_tx" placeholder="e.g. 3 Months" oninput="saveConsultationData()">
+                                </div>
+                                <div class="form-group">
+                                    <label>ECOG Performance Status</label>
+                                    <select id="fu_ecog" onchange="saveConsultationData()">
+                                        <option value="0">ECOG 0 - Fully Active</option>
+                                        <option value="1">ECOG 1 - Restricted in strenuous activity</option>
+                                        <option value="2">ECOG 2 - Ambulatory, self-care active</option>
+                                        <option value="3">ECOG 3 - Limited self-care</option>
+                                        <option value="4">ECOG 4 - Disabled</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="form-group" style="margin-top:15px;">
+                                <label>Current Symptoms / Complaints</label>
+                                <textarea id="fu_symptoms" placeholder="State patient's current complaints or report recovery..." oninput="saveConsultationData()"></textarea>
+                            </div>
+
+                            <h3 style="font-size:0.95rem; font-weight:700; color:var(--accent-teal); margin-top:20px; border-bottom:1px solid var(--border-color); padding-bottom:6px;">Treatment-Related Toxicity Grading (CTCAE)</h3>
+                            <div class="comparison-table-wrapper" style="margin-top:10px;">
+                                <table class="comparison-table" id="fu_toxicity_table">
+                                    <thead>
+                                        <tr>
+                                            <th>Acute / Late</th>
+                                            <th>Site / System (Toxicity)</th>
+                                            <th>CTCAE Grade</th>
+                                            <th style="width:50px; text-align:center;">Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="fu_toxicity_body">
+                                        <!-- Rows added dynamically -->
+                                    </tbody>
+                                </table>
+                            </div>
+                            <button class="btn btn-secondary" style="font-size:0.75rem; padding:6px 12px; margin-top:10px;" onclick="addToxicityRow()">+ Add Toxicity Entry</button>
+
+                            <h3 style="font-size:0.95rem; font-weight:700; color:var(--accent-teal); margin-top:20px; border-bottom:1px solid var(--border-color); padding-bottom:6px;">Clinical Examination Findings</h3>
+                            <div class="form-grid" style="margin-top:10px;">
+                                <div class="form-group">
+                                    <label>General Condition Notes</label>
+                                    <input type="text" id="fu_exam_general" placeholder="e.g. Well nourished, no pallor, no icterus" oninput="saveConsultationData()">
+                                </div>
+                                <div class="form-group">
+                                    <label>Regional Lymph Nodes Status</label>
+                                    <input type="text" id="fu_exam_nodes" placeholder="e.g. No cervical or axillary adenopathy palpable" oninput="saveConsultationData()">
+                                </div>
+                                <div class="form-group full-width">
+                                    <label>Local Tumor Site Examination</label>
+                                    <textarea id="fu_exam_local" placeholder="Describe inspection of treated site, skin shifts, or radiation scarring..." oninput="saveConsultationData()"></textarea>
+                                </div>
+                                <div class="form-group full-width">
+                                    <label>Relevant Systemic Findings</label>
+                                    <textarea id="fu_exam_systemic" placeholder="e.g. Chest: bilateral air entry equal, clear" oninput="saveConsultationData()"></textarea>
+                                </div>
+                            </div>
+
+                            <h3 style="font-size:0.95rem; font-weight:700; color:var(--accent-teal); margin-top:20px; border-bottom:1px solid var(--border-color); padding-bottom:6px;">Surveillance & Reassessment Investigations</h3>
+                            <div class="comparison-table-wrapper" style="margin-top:10px;">
+                                <table class="comparison-table" id="fu_investigation_table">
+                                    <thead>
+                                        <tr>
+                                            <th>Investigation Modality / Lab</th>
+                                            <th>Date of Test</th>
+                                            <th>Key Result Findings</th>
+                                            <th style="width:50px; text-align:center;">Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="fu_investigation_body">
+                                        <!-- Rows added dynamically -->
+                                    </tbody>
+                                </table>
+                            </div>
+                            <button class="btn btn-secondary" style="font-size:0.75rem; padding:6px 12px; margin-top:10px;" onclick="addInvestigationRow()">+ Add Investigation</button>
+
+                            <div class="form-group" style="margin-top:20px;">
+                                <label style="font-weight:700;">Disease Control / Response Status:</label>
+                                <div class="checkbox-list" style="margin-top:8px;">
+                                    <label class="checkbox-item"><input type="checkbox" id="fu_status_ned" onchange="saveConsultationData()"> No Evidence of Disease (NED)</label>
+                                    <label class="checkbox-item"><input type="checkbox" id="fu_status_cr" onchange="saveConsultationData()"> Complete Response (CR)</label>
+                                    <label class="checkbox-item"><input type="checkbox" id="fu_status_pr" onchange="saveConsultationData()"> Partial Response (PR)</label>
+                                    <label class="checkbox-item"><input type="checkbox" id="fu_status_sd" onchange="saveConsultationData()"> Stable Disease (SD)</label>
+                                    <label class="checkbox-item"><input type="checkbox" id="fu_status_pd" onchange="saveConsultationData()"> Progressive Disease (PD)</label>
+                                    <label class="checkbox-item"><input type="checkbox" id="fu_status_rec" onchange="saveConsultationData()"> Disease Recurrence</label>
+                                </div>
+                            </div>
+
+                            <div class="form-group" style="margin-top:15px;">
+                                <label>Clinical Assessment Summary</label>
+                                <textarea id="fu_assessment" placeholder="Synthesize symptoms, tox, and scan findings..." oninput="saveConsultationData()"></textarea>
+                            </div>
+
+                            <div class="form-grid" style="margin-top:15px;">
+                                <div class="form-group">
+                                    <label>Further Investigations Planned</label>
+                                    <input type="text" id="fu_plan_invest" placeholder="e.g. PET-CT scan in 6 months" oninput="saveConsultationData()">
+                                </div>
+                                <div class="form-group">
+                                    <label>Intervention / Treatment Plan</label>
+                                    <input type="text" id="fu_plan_tx" placeholder="e.g. Continue endocrine therapy (Tamoxifen)" oninput="saveConsultationData()">
+                                </div>
+                                <div class="form-group">
+                                    <label>Supportive Care & Medications</label>
+                                    <input type="text" id="fu_plan_supportive" placeholder="e.g. Topical creams for radiation dermatitis" oninput="saveConsultationData()">
+                                </div>
+                                <div class="form-group">
+                                    <label>Next Follow-up Visit Date</label>
+                                    <input type="date" id="fu_next_visit" oninput="saveConsultationData()">
+                                </div>
+                            </div>
+
+                            <!-- HMIS COPY-PASTE OUTBOX -->
+                            <div class="hmis-output-container">
+                                <div style="display:flex; justify-content:space-between; align-items:center;">
+                                    <h4 style="font-weight:700; color:var(--accent-teal); font-size:0.85rem;">📋 Follow-up Visit Summary (Copy to Hospital HMIS)</h4>
+                                    <button class="btn" style="font-size:0.75rem; padding:6px 12px;" onclick="copyFollowUpNoteToClipboard()">Copy Note</button>
+                                </div>
+                                <textarea class="hmis-output-textarea" id="fu_hmis_textarea" readonly></textarea>
+                            </div>
+                        </div>
+                    </div>
+
+                        <!-- SUB-PANEL 3: CHEMOTHERAPY CYCLE VISIT -->
+                        <div id="sub_panel_chemo" class="glass-card" style="display:none; margin-bottom:15px;">
+                            <div id="chemo_empty_state" style="display:none; text-align:center; padding:40px; color:var(--text-muted);">
+                                <h3>No Chemotherapy Cycle Selected</h3>
+                                <p style="font-size:0.8rem; margin-top:10px;">Please click the <strong>+ Add Cycle</strong> button on the left sidebar to start tracking chemotherapy cycle note visits.</p>
+                                <button class="btn btn-secondary" style="margin-top:15px;" onclick="addNewChemoRecord()">+ Add New Cycle</button>
+                            </div>
+                            <div id="chemo_form_content" style="display:block;">
+                                <div style="display:flex; justify-content:space-between; align-items:center;">
+                                    <h2 class="card-title" id="chemo_title_display">Chemotherapy Cycle Visit & Admission Note</h2>
+                                    <button class="btn-mini-danger" id="btn_delete_chemo" onclick="deleteActiveChemoRecord()">Delete Cycle Record</button>
+                                </div>
+                            <div class="form-grid" style="margin-top:10px;">
+                                <div class="form-group">
+                                    <label>Date of Visit / Admission</label>
+                                    <input type="date" id="ch_date" oninput="saveConsultationData()">
+                                </div>
+                                <div class="form-group">
+                                    <label>Chemotherapy Regimen</label>
+                                    <input type="text" id="ch_regimen" placeholder="e.g. Paclitaxel + Carboplatin" oninput="saveConsultationData()">
+                                </div>
+                                <div class="form-group">
+                                    <label>Treatment Intent</label>
+                                    <input type="text" id="ch_intent" placeholder="e.g. Concurrent / Adjuvant" oninput="saveConsultationData()">
+                                </div>
+                            </div>
+                            <div class="form-grid" style="margin-top:10px;">
+                                <div class="form-group">
+                                    <label>Current Cycle Number</label>
+                                    <input type="number" id="ch_cycle_num" placeholder="e.g. 3" oninput="saveConsultationData()">
+                                </div>
+                                <div class="form-group">
+                                    <label>Cycle Day Number</label>
+                                    <input type="number" id="ch_day_num" value="1" placeholder="e.g. 1" oninput="saveConsultationData()">
+                                </div>
+                                <div class="form-group">
+                                    <label>Planned Cycle Interval (days)</label>
+                                    <input type="number" id="ch_interval" placeholder="e.g. 21" oninput="saveConsultationData()">
+                                </div>
+                                <div class="form-group">
+                                    <label>Date of Previous Cycle</label>
+                                    <input type="date" id="ch_prev_date" oninput="saveConsultationData()">
+                                </div>
+                            </div>
+
+                            <div class="form-group" style="margin-top:15px;">
+                                <label style="font-weight:700;">Interval History Checkpoints:</label>
+                                <div class="checkbox-list" style="margin-top:8px;">
+                                    <label class="checkbox-item"><input type="checkbox" id="ch_int_new_sym" onchange="saveConsultationData()"> New symptoms observed since last cycle</label>
+                                    <label class="checkbox-item"><input type="checkbox" id="ch_int_hosp" onchange="saveConsultationData()"> Hospitalisation / fever / infection since last cycle</label>
+                                    <label class="checkbox-item"><input type="checkbox" id="ch_int_toxicity" onchange="saveConsultationData()"> Significant treatment-related toxicity noted</label>
+                                </div>
+                                <textarea id="ch_interval_notes" placeholder="Describe interval symptoms, hospital stay details, or patient recovery..." style="margin-top:10px;" oninput="saveConsultationData()"></textarea>
+                            </div>
+
+                            <h3 style="font-size:0.95rem; font-weight:700; color:var(--accent-teal); margin-top:20px; border-bottom:1px solid var(--border-color); padding-bottom:6px;">Toxicity Assessment (Select if Present & Select Grade)</h3>
+                            <div style="margin-top:10px;">
+                                <div class="toxicity-grid-row toxicity-grid-header">
+                                    <div>Toxicity Type</div>
+                                    <div style="text-align:center;">Present</div>
+                                    <div>CTCAE Grade</div>
+                                </div>
+                                
+                                <div class="toxicity-grid-row">
+                                    <div>Nausea / Vomiting</div>
+                                    <div style="text-align:center;"><input type="checkbox" id="ch_tox_nausea_pres" onchange="saveConsultationData()"></div>
+                                    <div>
+                                        <select id="ch_tox_nausea_gr" onchange="saveConsultationData()">
+                                            <option value="Grade 0">Grade 0</option><option value="Grade 1">Grade 1</option><option value="Grade 2">Grade 2</option><option value="Grade 3">Grade 3</option><option value="Grade 4">Grade 4</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="toxicity-grid-row">
+                                    <div>Diarrhoea / Constipation</div>
+                                    <div style="text-align:center;"><input type="checkbox" id="ch_tox_diarrhea_pres" onchange="saveConsultationData()"></div>
+                                    <div>
+                                        <select id="ch_tox_diarrhea_gr" onchange="saveConsultationData()">
+                                            <option value="Grade 0">Grade 0</option><option value="Grade 1">Grade 1</option><option value="Grade 2">Grade 2</option><option value="Grade 3">Grade 3</option><option value="Grade 4">Grade 4</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="toxicity-grid-row">
+                                    <div>Mucositis (Oral)</div>
+                                    <div style="text-align:center;"><input type="checkbox" id="ch_tox_mucositis_pres" onchange="saveConsultationData()"></div>
+                                    <div>
+                                        <select id="ch_tox_mucositis_gr" onchange="saveConsultationData()">
+                                            <option value="Grade 0">Grade 0</option><option value="Grade 1">Grade 1</option><option value="Grade 2">Grade 2</option><option value="Grade 3">Grade 3</option><option value="Grade 4">Grade 4</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="toxicity-grid-row">
+                                    <div>Fatigue / Weakness</div>
+                                    <div style="text-align:center;"><input type="checkbox" id="ch_tox_fatigue_pres" onchange="saveConsultationData()"></div>
+                                    <div>
+                                        <select id="ch_tox_fatigue_gr" onchange="saveConsultationData()">
+                                            <option value="Grade 0">Grade 0</option><option value="Grade 1">Grade 1</option><option value="Grade 2">Grade 2</option><option value="Grade 3">Grade 3</option><option value="Grade 4">Grade 4</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="toxicity-grid-row">
+                                    <div>Peripheral Neuropathy</div>
+                                    <div style="text-align:center;"><input type="checkbox" id="ch_tox_neuro_pres" onchange="saveConsultationData()"></div>
+                                    <div>
+                                        <select id="ch_tox_neuro_gr" onchange="saveConsultationData()">
+                                            <option value="Grade 0">Grade 0</option><option value="Grade 1">Grade 1</option><option value="Grade 2">Grade 2</option><option value="Grade 3">Grade 3</option><option value="Grade 4">Grade 4</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="toxicity-grid-row">
+                                    <div>Fever / Neutropenic Infection</div>
+                                    <div style="text-align:center;"><input type="checkbox" id="ch_tox_fever_pres" onchange="saveConsultationData()"></div>
+                                    <div>
+                                        <select id="ch_tox_fever_gr" onchange="saveConsultationData()">
+                                            <option value="Grade 0">Grade 0</option><option value="Grade 1">Grade 1</option><option value="Grade 2">Grade 2</option><option value="Grade 3">Grade 3</option><option value="Grade 4">Grade 4</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="toxicity-grid-row">
+                                    <div>Skin Toxicity / Hand-Foot</div>
+                                    <div style="text-align:center;"><input type="checkbox" id="ch_tox_skin_pres" onchange="saveConsultationData()"></div>
+                                    <div>
+                                        <select id="ch_tox_skin_gr" onchange="saveConsultationData()">
+                                            <option value="Grade 0">Grade 0</option><option value="Grade 1">Grade 1</option><option value="Grade 2">Grade 2</option><option value="Grade 3">Grade 3</option><option value="Grade 4">Grade 4</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="toxicity-grid-row">
+                                    <div style="display:flex; align-items:center; gap:8px;">
+                                        <span>Other:</span>
+                                        <input type="text" id="ch_tox_other_name" placeholder="e.g. Alopecia" style="padding:4px 8px; font-size:0.75rem; border-radius:4px; max-width:120px;" oninput="saveConsultationData()">
+                                    </div>
+                                    <div style="text-align:center;"><input type="checkbox" id="ch_tox_other_pres" onchange="saveConsultationData()"></div>
+                                    <div>
+                                        <select id="ch_tox_other_gr" onchange="saveConsultationData()">
+                                            <option value="Grade 0">Grade 0</option><option value="Grade 1">Grade 1</option><option value="Grade 2">Grade 2</option><option value="Grade 3">Grade 3</option><option value="Grade 4">Grade 4</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <h3 style="font-size:0.95rem; font-weight:700; color:var(--accent-teal); margin-top:20px; border-bottom:1px solid var(--border-color); padding-bottom:6px;">Examination & Vitals</h3>
+                            <div class="form-grid" style="margin-top:10px;">
+                                <div class="form-group">
+                                    <label>Vitals (BP/PR/RR/Temp/SpO2)</label>
+                                    <input type="text" id="ch_vitals" placeholder="e.g. 120/80 mmHg, 82 bpm, 16/min, 98.4F, 99%" oninput="saveConsultationData()">
+                                </div>
+                                <div class="form-group">
+                                    <label>General Condition Notes</label>
+                                    <input type="text" id="ch_exam_general" placeholder="e.g. Afebrile, no peripheral edema, ECOG 1" oninput="saveConsultationData()">
+                                </div>
+                                <div class="form-group full-width">
+                                    <label>Relevant Focused Clinical Examination</label>
+                                    <textarea id="ch_exam_focused" placeholder="Describe heart sounds, breath sounds, local chest wall inspections..." oninput="saveConsultationData()"></textarea>
+                                </div>
+                            </div>
+
+                            <h3 style="font-size:0.95rem; font-weight:700; color:var(--accent-teal); margin-top:20px; border-bottom:1px solid var(--border-color); padding-bottom:6px;">Pre-Chemo Blood Workup Checkpoints</h3>
+                            <div class="form-grid" style="margin-top:10px;">
+                                <div class="form-group">
+                                    <label>Hemoglobin (Hb, g/dl)</label>
+                                    <input type="number" step="0.1" id="ch_lab_hb" placeholder="e.g. 11.2" oninput="saveConsultationData()">
+                                </div>
+                                <div class="form-group">
+                                    <label>TLC / ANC (cells/cumm)</label>
+                                    <input type="text" id="ch_lab_tlc" placeholder="e.g. 4500 / 2200" oninput="saveConsultationData()">
+                                </div>
+                                <div class="form-group">
+                                    <label>Platelets (lakhs/cumm)</label>
+                                    <input type="number" step="0.01" id="ch_lab_plt" placeholder="e.g. 1.85" oninput="saveConsultationData()">
+                                </div>
+                                <div class="form-group">
+                                    <label>Creatinine (mg/dl)</label>
+                                    <input type="number" step="0.01" id="ch_lab_cr" placeholder="e.g. 0.82" oninput="saveConsultationData()">
+                                </div>
+                                <div class="form-group">
+                                    <label>Bilirubin (mg/dl)</label>
+                                    <input type="number" step="0.01" id="ch_lab_bilirubin" placeholder="e.g. 0.65" oninput="saveConsultationData()">
+                                </div>
+                                <div class="form-group">
+                                    <label>AST / ALT (U/L)</label>
+                                    <input type="text" id="ch_lab_trans" placeholder="e.g. 24 / 28" oninput="saveConsultationData()">
+                                </div>
+                            </div>
+
+                            <h3 style="font-size:0.95rem; font-weight:700; color:var(--accent-teal); margin-top:20px; border-bottom:1px solid var(--border-color); padding-bottom:6px;">Chemo Fitness Evaluation & Day-Care Admission Note</h3>
+                            <div class="form-group" style="margin-top:10px;">
+                                <label style="font-weight:700;">Fitness Status Decisons:</label>
+                                <div class="checkbox-list" style="margin-top:8px;">
+                                    <label class="checkbox-item"><input type="checkbox" id="ch_fit_yes" onchange="saveConsultationData()"> Fit for planned chemotherapy cycle</label>
+                                    <label class="checkbox-item"><input type="checkbox" id="ch_fit_proceed" onchange="saveConsultationData()"> Proceed without dose modification</label>
+                                    <label class="checkbox-item"><input type="checkbox" id="ch_fit_mod" onchange="saveConsultationData()"> Dose modification required</label>
+                                    <label class="checkbox-item"><input type="checkbox" id="ch_fit_defer" onchange="saveConsultationData()"> Chemotherapy cycle deferred</label>
+                                    <label class="checkbox-item"><input type="checkbox" id="ch_fit_eval" onchange="saveConsultationData()"> Further diagnostic evaluation required</label>
+                                </div>
+                                <input type="text" id="ch_fit_reason" placeholder="State reason if modified, deferred, or evaluation required..." style="margin-top:10px;" oninput="saveConsultationData()">
+                            </div>
+
+                            <!-- DYNAMIC FILL-IN-THE-BLANKS ADMISSION / DAY-CARE NOTE -->
+                            <div class="hmis-output-container" style="border-color:var(--accent-cyan); background-color:rgba(2, 132, 199, 0.02); margin-top:15px;">
+                                <div style="display:flex; justify-content:space-between; align-items:center;">
+                                    <h4 style="font-weight:700; color:var(--accent-cyan); font-size:0.85rem;">📝 Day-Care Ward Admission / Clinical Note (Ready-to-Use)</h4>
+                                    <button class="btn" style="background-color:var(--accent-cyan); color:#ffffff; font-size:0.75rem; padding:6px 12px;" onclick="copyChemoAdmissionNoteToClipboard()">Copy Admission Note</button>
+                                </div>
+                                <div id="chemo_admission_paragraph" style="margin-top:12px; font-size:0.85rem; line-height:1.5; color:var(--text-primary); border:1px solid var(--border-color); border-radius:6px; padding:12px; background:#ffffff;">
+                                    <!-- Auto generated block -->
+                                </div>
+                            </div>
+
+                            <div class="form-grid" style="margin-top:15px;">
+                                <div class="form-group">
+                                    <label>Chemotherapy Orders Signed as per Protocol?</label>
+                                    <select id="ch_orders_protocol" onchange="saveConsultationData()">
+                                        <option value="Yes">Yes, orders checked and verified</option>
+                                        <option value="No">No, orders pending verification</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label>Supportive Medications Planned</label>
+                                    <input type="text" id="ch_plan_supportive" placeholder="e.g. Injection Aprepitant + Ondansetron, IV fluids" oninput="saveConsultationData()">
+                                </div>
+                                <div class="form-group full-width">
+                                    <label>Special Orders / Nursing Instructions</label>
+                                    <textarea id="ch_instructions" placeholder="Specify infusion speeds, cold cap cooling, extravasation watch, etc..." oninput="saveConsultationData()"></textarea>
+                                </div>
+                            </div>
+
+                            <!-- HMIS COPY-PASTE OUTBOX -->
+                            <div class="hmis-output-container">
+                                <div style="display:flex; justify-content:space-between; align-items:center;">
+                                    <h4 style="font-weight:700; color:var(--accent-teal); font-size:0.85rem;">📋 HMIS Copy-Paste Cycle Note (Detailed Consultation Log)</h4>
+                                    <button class="btn" style="font-size:0.75rem; padding:6px 12px;" onclick="copyChemoNoteToClipboard()">Copy Note</button>
+                                </div>
+                                <textarea class="hmis-output-textarea" id="ch_hmis_textarea" readonly></textarea>
+                            </div>
+                        </div>
+                    </div>
                     </div>
                 </div>
             </div>
@@ -2595,10 +3323,9 @@
             updateFractionDisplays();
             calculateTrends();
 
-            // Refresh sidebar UI active styling
-            document.querySelectorAll(".patient-card").forEach(card => {
-                card.classList.remove("active");
-            });
+            // Load clinical consultations data
+            loadConsultationData();
+
             renderPatientList();
         }
 
@@ -3872,6 +4599,1021 @@ V20Gy (%): 18.20
             }
         }
 
+            }
+        }
+
+        // -------------------------------------------------------------
+        // CLINICAL DOCUMENTATION TEMPLATES ENGINE
+        // -------------------------------------------------------------
+        
+        // Global variables for active consultation logs
+        let activeFollowUpIndex = null;
+        let activeChemoIndex = null;
+
+        // Drawing Canvas Variables
+        let sketchpadCanvas = null;
+        let sketchpadCtx = null;
+        let isDrawingSketchpad = false;
+        let lastSketchpadX = 0;
+        let lastSketchpadY = 0;
+
+        // Initialize Drawing Canvas Mouse/Touch Listeners
+        function initDrawingCanvas() {
+            sketchpadCanvas = document.getElementById("opd_sketchpad");
+            if (!sketchpadCanvas) return;
+            sketchpadCtx = sketchpadCanvas.getContext("2d");
+
+            // Event Listeners for drawing
+            sketchpadCanvas.addEventListener("mousedown", startSketchpadDrawing);
+            sketchpadCanvas.addEventListener("mousemove", drawOnSketchpad);
+            sketchpadCanvas.addEventListener("mouseup", stopSketchpadDrawing);
+            sketchpadCanvas.addEventListener("mouseout", stopSketchpadDrawing);
+
+            // Touch support for mobile devices
+            sketchpadCanvas.addEventListener("touchstart", (e) => {
+                const touch = e.touches[0];
+                const rect = sketchpadCanvas.getBoundingClientRect();
+                lastSketchpadX = touch.clientX - rect.left;
+                lastSketchpadY = touch.clientY - rect.top;
+                isDrawingSketchpad = true;
+                e.preventDefault();
+            }, { passive: false });
+
+            sketchpadCanvas.addEventListener("touchmove", (e) => {
+                if (!isDrawingSketchpad) return;
+                const touch = e.touches[0];
+                const rect = sketchpadCanvas.getBoundingClientRect();
+                const x = touch.clientX - rect.left;
+                const y = touch.clientY - rect.top;
+                
+                sketchpadCtx.beginPath();
+                sketchpadCtx.moveTo(lastSketchpadX, lastSketchpadY);
+                sketchpadCtx.lineTo(x, y);
+                sketchpadCtx.strokeStyle = document.getElementById("opd_brush_color").value || "#0d9488";
+                sketchpadCtx.lineWidth = 3;
+                sketchpadCtx.lineCap = "round";
+                sketchpadCtx.lineJoin = "round";
+                sketchpadCtx.stroke();
+                
+                lastSketchpadX = x;
+                lastSketchpadY = y;
+                e.preventDefault();
+            }, { passive: false });
+
+            sketchpadCanvas.addEventListener("touchend", () => {
+                isDrawingSketchpad = false;
+                saveConsultationData();
+            });
+        }
+
+        function startSketchpadDrawing(e) {
+            isDrawingSketchpad = true;
+            const rect = sketchpadCanvas.getBoundingClientRect();
+            lastSketchpadX = e.clientX - rect.left;
+            lastSketchpadY = e.clientY - rect.top;
+        }
+
+        function drawOnSketchpad(e) {
+            if (!isDrawingSketchpad) return;
+            const rect = sketchpadCanvas.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+
+            sketchpadCtx.beginPath();
+            sketchpadCtx.moveTo(lastSketchpadX, lastSketchpadY);
+            sketchpadCtx.lineTo(x, y);
+            sketchpadCtx.strokeStyle = document.getElementById("opd_brush_color").value || "#0d9488";
+            sketchpadCtx.lineWidth = 3;
+            sketchpadCtx.lineCap = "round";
+            sketchpadCtx.lineJoin = "round";
+            sketchpadCtx.stroke();
+
+            lastSketchpadX = x;
+            lastSketchpadY = y;
+        }
+
+        function stopSketchpadDrawing() {
+            if (isDrawingSketchpad) {
+                isDrawingSketchpad = false;
+                saveConsultationData();
+            }
+        }
+
+        function clearOPDSketchpad() {
+            if (!sketchpadCtx || !sketchpadCanvas) return;
+            sketchpadCtx.clearRect(0, 0, sketchpadCanvas.width, sketchpadCanvas.height);
+            saveConsultationData();
+        }
+
+        function updateOPDBrushSettings() {
+            // Handled dynamically in draw operations
+        }
+
+        function loadOPDSketchpadImage(dataURL) {
+            if (!sketchpadCanvas || !sketchpadCtx) return;
+            sketchpadCtx.clearRect(0, 0, sketchpadCanvas.width, sketchpadCanvas.height);
+            if (!dataURL) return;
+            const img = new Image();
+            img.onload = function() {
+                sketchpadCtx.drawImage(img, 0, 0);
+            };
+            img.src = dataURL;
+        }
+
+        // -------------------------------------------------------------
+        // OPD TIMELINE HANDLERS
+        // -------------------------------------------------------------
+        function addTimelineMilestone(date = "", event = "", detail = "") {
+            const tbody = document.getElementById("opd_timeline_body");
+            if (!tbody) return;
+            const rowId = 'tl_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+            
+            const tr = document.createElement("tr");
+            tr.id = rowId;
+            tr.innerHTML = `
+                <td><input type="text" value="${date}" placeholder="e.g. 2026-06-01" class="timeline-date-input" oninput="saveConsultationData()"></td>
+                <td><input type="text" value="${event}" placeholder="e.g. Found left breast lump" class="timeline-event-input" oninput="saveConsultationData()"></td>
+                <td><input type="text" value="${detail}" placeholder="e.g. Firm, painless, 3x2cm" class="timeline-detail-input" oninput="saveConsultationData()"></td>
+                <td style="text-align:center;"><button class="btn-mini-danger" onclick="removeTimelineMilestone('${rowId}')">Delete</button></td>
+            `;
+            tbody.appendChild(tr);
+            saveConsultationData();
+        }
+
+        function removeTimelineMilestone(rowId) {
+            const row = document.getElementById(rowId);
+            if (row) {
+                row.remove();
+                saveConsultationData();
+            }
+        }
+
+        function getTimelineMilestonesData() {
+            const data = [];
+            const tbody = document.getElementById("opd_timeline_body");
+            if (!tbody) return data;
+            tbody.querySelectorAll("tr").forEach(tr => {
+                const date = tr.querySelector(".timeline-date-input").value;
+                const event = tr.querySelector(".timeline-event-input").value;
+                const detail = tr.querySelector(".timeline-detail-input").value;
+                data.push({ date, event, detail });
+            });
+            return data;
+        }
+
+        function loadTimelineMilestones(milestones = []) {
+            const tbody = document.getElementById("opd_timeline_body");
+            if (!tbody) return;
+            tbody.innerHTML = "";
+            if (milestones.length === 0) {
+                // Add an initial empty row
+                addTimelineMilestone("", "", "");
+                return;
+            }
+            milestones.forEach(m => {
+                addTimelineMilestone(m.date, m.event, m.detail);
+            });
+        }
+
+        // -------------------------------------------------------------
+        // FOLLOW-UP TOXICITY HANDLERS
+        // -------------------------------------------------------------
+        function addToxicityRow(type = "Acute", site = "", grade = "Grade 0") {
+            const tbody = document.getElementById("fu_toxicity_body");
+            if (!tbody) return;
+            const rowId = 'tox_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+            
+            const tr = document.createElement("tr");
+            tr.id = rowId;
+            tr.innerHTML = `
+                <td>
+                    <select class="tox-type-select" onchange="saveConsultationData()">
+                        <option value="Acute" ${type === "Acute" ? "selected" : ""}>Acute</option>
+                        <option value="Late" ${type === "Late" ? "selected" : ""}>Late</option>
+                    </select>
+                </td>
+                <td><input type="text" value="${site}" placeholder="e.g. Radiation Dermatitis" class="tox-site-input" oninput="saveConsultationData()"></td>
+                <td>
+                    <select class="tox-grade-select" onchange="saveConsultationData()">
+                        <option value="Grade 0" ${grade === "Grade 0" ? "selected" : ""}>Grade 0 - None</option>
+                        <option value="Grade 1" ${grade === "Grade 1" ? "selected" : ""}>Grade 1 - Mild</option>
+                        <option value="Grade 2" ${grade === "Grade 2" ? "selected" : ""}>Grade 2 - Moderate</option>
+                        <option value="Grade 3" ${grade === "Grade 3" ? "selected" : ""}>Grade 3 - Severe</option>
+                        <option value="Grade 4" ${grade === "Grade 4" ? "selected" : ""}>Grade 4 - Threatening</option>
+                    </select>
+                </td>
+                <td style="text-align:center;"><button class="btn-mini-danger" onclick="removeToxicityRow('${rowId}')">Delete</button></td>
+            `;
+            tbody.appendChild(tr);
+            saveConsultationData();
+        }
+
+        function removeToxicityRow(rowId) {
+            const row = document.getElementById(rowId);
+            if (row) {
+                row.remove();
+                saveConsultationData();
+            }
+        }
+
+        function getToxicityRowsData() {
+            const data = [];
+            const tbody = document.getElementById("fu_toxicity_body");
+            if (!tbody) return data;
+            tbody.querySelectorAll("tr").forEach(tr => {
+                const type = tr.querySelector(".tox-type-select").value;
+                const site = tr.querySelector(".tox-site-input").value;
+                const grade = tr.querySelector(".tox-grade-select").value;
+                data.push({ type, site, grade });
+            });
+            return data;
+        }
+
+        function loadToxicityRows(toxicities = []) {
+            const tbody = document.getElementById("fu_toxicity_body");
+            if (!tbody) return;
+            tbody.innerHTML = "";
+            toxicities.forEach(t => {
+                addToxicityRow(t.type, t.site, t.grade);
+            });
+        }
+
+        // -------------------------------------------------------------
+        // FOLLOW-UP INVESTIGATION HANDLERS
+        // -------------------------------------------------------------
+        function addInvestigationRow(modality = "", date = "", result = "") {
+            const tbody = document.getElementById("fu_investigation_body");
+            if (!tbody) return;
+            const rowId = 'inv_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+            
+            const tr = document.createElement("tr");
+            tr.id = rowId;
+            tr.innerHTML = `
+                <td><input type="text" value="${modality}" placeholder="e.g. PET-CT Chest/Pelvis" class="inv-modality-input" oninput="saveConsultationData()"></td>
+                <td><input type="text" value="${date}" placeholder="e.g. 2026-07-01" class="inv-date-input" oninput="saveConsultationData()"></td>
+                <td><input type="text" value="${result}" placeholder="e.g. Complete response" class="inv-result-input" oninput="saveConsultationData()"></td>
+                <td style="text-align:center;"><button class="btn-mini-danger" onclick="removeInvestigationRow('${rowId}')">Delete</button></td>
+            `;
+            tbody.appendChild(tr);
+            saveConsultationData();
+        }
+
+        function removeInvestigationRow(rowId) {
+            const row = document.getElementById(rowId);
+            if (row) {
+                row.remove();
+                saveConsultationData();
+            }
+        }
+
+        function getInvestigationRowsData() {
+            const data = [];
+            const tbody = document.getElementById("fu_investigation_body");
+            if (!tbody) return data;
+            tbody.querySelectorAll("tr").forEach(tr => {
+                const modality = tr.querySelector(".inv-modality-input").value;
+                const date = tr.querySelector(".inv-date-input").value;
+                const result = tr.querySelector(".inv-result-input").value;
+                data.push({ modality, date, result });
+            });
+            return data;
+        }
+
+        function loadInvestigationRows(investigations = []) {
+            const tbody = document.getElementById("fu_investigation_body");
+            if (!tbody) return;
+            tbody.innerHTML = "";
+            investigations.forEach(i => {
+                addInvestigationRow(i.modality, i.date, i.result);
+            });
+        }
+
+        // -------------------------------------------------------------
+        // CATEGORY DROPDOWN TOGGLER
+        // -------------------------------------------------------------
+        function onConsultCategoryChange() {
+            const cat = document.getElementById("consult_category_selector").value;
+            
+            // Hide all sub-panels
+            document.getElementById("sub_panel_opd_new").style.display = "none";
+            document.getElementById("sub_panel_followup").style.display = "none";
+            document.getElementById("sub_panel_chemo").style.display = "none";
+
+            // Hide lists
+            document.getElementById("followup_records_list_container").style.display = "none";
+            document.getElementById("chemo_records_list_container").style.display = "none";
+
+            if (cat === "opd-new") {
+                document.getElementById("sub_panel_opd_new").style.display = "block";
+                loadOPDConsultForm();
+            } else if (cat === "followup") {
+                document.getElementById("followup_records_list_container").style.display = "flex";
+                document.getElementById("sub_panel_followup").style.display = "block";
+                renderFollowUpSidebar();
+                loadFollowUpForm();
+            } else if (cat === "chemo") {
+                document.getElementById("chemo_records_list_container").style.display = "flex";
+                document.getElementById("sub_panel_chemo").style.display = "block";
+                renderChemoSidebar();
+                loadChemoForm();
+            }
+        }
+
+        // -------------------------------------------------------------
+        // OPD CONSULT LOAD & SAVE DATA
+        // -------------------------------------------------------------
+        function loadOPDConsultForm() {
+            if (!activePatientId) return;
+            const pt = db.find(p => p.id === activePatientId);
+            if (!pt) return;
+
+            const opd = pt.opd_consult || {};
+
+            // Pre-fills if empty
+            if (!opd.consult_date) opd.consult_date = new Date().toISOString().slice(0, 10);
+            if (!opd.referring_dept) opd.referring_dept = "";
+            if (!opd.consultant) opd.consultant = "";
+            if (!opd.diag_reason) opd.diag_reason = `${pt.site} (${pt.stage_t || 'Tx'}${pt.stage_n || 'Nx'}${pt.stage_m || 'M0'}), Histology: ${pt.site_histology || ""}`;
+            if (!opd.symptoms) opd.symptoms = "";
+            if (!opd.duration) opd.duration = "";
+            if (!opd.comorbidities) opd.comorbidities = "";
+            if (!opd.ecog) opd.ecog = pt.ecog || "0";
+            if (!opd.imaging_modality) opd.imaging_modality = "";
+            if (!opd.imaging_findings) opd.imaging_findings = "";
+            if (!opd.endoscopy) opd.endoscopy = "";
+            if (!opd.labs) opd.labs = `Hb: ${pt.lab_hb || ""} g/dl, Platelets: ${pt.lab_plt || ""} lakhs/cumm, TLC/ANC: ${pt.lab_wbc || ""}/${pt.lab_anc || ""}`;
+            if (!opd.biopsy_site) opd.biopsy_site = pt.site;
+            if (!opd.biopsy_diag) opd.biopsy_diag = "";
+            if (!opd.biopsy_grade) opd.biopsy_grade = "";
+            if (!opd.biopsy_ihc) opd.biopsy_ihc = "";
+            if (!opd.exam_general) opd.exam_general = "Conscious, oriented, hemodynamically stable";
+            if (!opd.exam_nodes) opd.exam_nodes = "No significant lymphadenopathy palpable";
+            if (!opd.exam_local) opd.exam_local = "";
+            if (!opd.exam_systemic) opd.exam_systemic = "CVS: S1 S2 heard, Chest: Clear, CNS: NAD, P/A: Soft";
+            if (!opd.stage_edition) opd.stage_edition = "AJCC 8th Edition";
+            if (!opd.stage_prov) opd.stage_prov = `Stage ${pt.plan_stage || pt.sim_stage || 'Unknown'} (${pt.stage_t || 'Tx'}${pt.stage_n || 'Nx'}${pt.stage_m || 'M0'})`;
+            if (!opd.rt_intent) opd.rt_intent = pt.tx_intent || "Curative";
+            if (!opd.rt_target) opd.rt_target = `${pt.site}, ${pt.tps_dose_total || ""}Gy / ${pt.tps_fractions || ""} fractions`;
+            if (!opd.chemo_plan) opd.chemo_plan = "";
+            if (!opd.followup_plan) opd.followup_plan = "";
+
+            // Populate form values
+            document.getElementById("opd_consult_date").value = opd.consult_date;
+            document.getElementById("opd_referring_dept").value = opd.referring_dept;
+            document.getElementById("opd_consultant").value = opd.consultant;
+            document.getElementById("opd_diag_reason").value = opd.diag_reason;
+            document.getElementById("opd_symptoms").value = opd.symptoms;
+            document.getElementById("opd_duration").value = opd.duration;
+            document.getElementById("opd_comorbidities").value = opd.comorbidities;
+            document.getElementById("opd_ecog").value = opd.ecog;
+            document.getElementById("opd_imaging_modality").value = opd.imaging_modality;
+            document.getElementById("opd_imaging_findings").value = opd.imaging_findings;
+            document.getElementById("opd_endoscopy").value = opd.endoscopy;
+            document.getElementById("opd_labs").value = opd.labs;
+            document.getElementById("opd_biopsy_site").value = opd.biopsy_site;
+            document.getElementById("opd_biopsy_diag").value = opd.biopsy_diag;
+            document.getElementById("opd_biopsy_grade").value = opd.biopsy_grade;
+            document.getElementById("opd_biopsy_ihc").value = opd.biopsy_ihc;
+            document.getElementById("opd_exam_general").value = opd.exam_general;
+            document.getElementById("opd_exam_nodes").value = opd.exam_nodes;
+            document.getElementById("opd_exam_local").value = opd.exam_local;
+            document.getElementById("opd_exam_systemic").value = opd.exam_systemic;
+            document.getElementById("opd_stage_edition").value = opd.stage_edition;
+            document.getElementById("opd_stage_prov").value = opd.stage_prov;
+            
+            // Checkboxes
+            document.getElementById("opd_plan_def").checked = !!opd.plan_def;
+            document.getElementById("opd_plan_neo").checked = !!opd.plan_neo;
+            document.getElementById("opd_plan_adj").checked = !!opd.plan_adj;
+            document.getElementById("opd_plan_ccrt").checked = !!opd.plan_ccrt;
+            document.getElementById("opd_plan_pall").checked = !!opd.plan_pall;
+            document.getElementById("opd_plan_surv").checked = !!opd.plan_surv;
+            document.getElementById("opd_plan_mdt").checked = !!opd.plan_mdt;
+
+            document.getElementById("opd_rt_intent").value = opd.rt_intent;
+            document.getElementById("opd_rt_target").value = opd.rt_target;
+            document.getElementById("opd_chemo_plan").value = opd.chemo_plan;
+            document.getElementById("opd_followup_plan").value = opd.followup_plan;
+
+            // Load milestones and drawing
+            loadTimelineMilestones(opd.milestones || []);
+            loadOPDSketchpadImage(opd.canvas_data);
+            generateHMISOPDNote();
+        }
+
+        // -------------------------------------------------------------
+        // FOLLOW-UP RECURRING DATA LOGIC
+        // -------------------------------------------------------------
+        function renderFollowUpSidebar() {
+            if (!activePatientId) return;
+            const pt = db.find(p => p.id === activePatientId);
+            if (!pt) return;
+
+            const container = document.getElementById("followup_records_list");
+            if (!container) return;
+            container.innerHTML = "";
+
+            if (!pt.follow_ups || pt.follow_ups.length === 0) {
+                container.innerHTML = `<div style="font-size:0.75rem; color:var(--text-muted); text-align:center; padding:10px;">No visits recorded. Click + Add Visit.</div>`;
+                return;
+            }
+
+            pt.follow_ups.forEach((fu, idx) => {
+                const item = document.createElement("div");
+                item.className = `record-list-item ${activeFollowUpIndex === idx ? "active" : ""}`;
+                item.onclick = () => {
+                    activeFollowUpIndex = idx;
+                    renderFollowUpSidebar();
+                    loadFollowUpForm();
+                };
+                item.innerHTML = `
+                    <div style="display:flex; flex-direction:column; gap:2px;">
+                        <span style="font-weight:700; font-size:0.75rem;">Visit #${idx + 1}</span>
+                        <span style="font-size:0.65rem; color:var(--text-secondary);">${fu.date || "No Date"}</span>
+                    </div>
+                `;
+                container.appendChild(item);
+            });
+        }
+
+        function addNewFollowUpRecord() {
+            if (!activePatientId) return;
+            const pt = db.find(p => p.id === activePatientId);
+            if (!pt) return;
+
+            if (!pt.follow_ups) pt.follow_ups = [];
+            
+            const newVisit = {
+                date: new Date().toISOString().slice(0, 10),
+                time_since_tx: "",
+                ecog: "0",
+                symptoms: "",
+                exam_general: "General condition fair, afebrile",
+                exam_nodes: "No regional lymph nodes palpable",
+                exam_local: "",
+                exam_systemic: "Chest: Clear, CVS: S1 S2 heard",
+                status_ned: true,
+                status_cr: false,
+                status_pr: false,
+                status_sd: false,
+                status_pd: false,
+                status_rec: false,
+                assessment: "",
+                plan_invest: "",
+                plan_tx: "",
+                plan_supportive: "",
+                next_visit: "",
+                toxicities: [],
+                investigations: []
+            };
+
+            pt.follow_ups.push(newVisit);
+            activeFollowUpIndex = pt.follow_ups.length - 1;
+            
+            // Add some default toxicity items
+            newVisit.toxicities.push({ type: "Acute", site: "Radiation Dermatitis", grade: "Grade 0" });
+            newVisit.toxicities.push({ type: "Acute", site: "Fatigue", grade: "Grade 0" });
+
+            saveConsultationData();
+            renderFollowUpSidebar();
+            loadFollowUpForm();
+        }
+
+        function deleteActiveFollowUp() {
+            if (!activePatientId || activeFollowUpIndex === null) return;
+            if (!confirm("Are you sure you want to delete this follow-up visit record?")) return;
+
+            const pt = db.find(p => p.id === activePatientId);
+            if (!pt) return;
+
+            pt.follow_ups.splice(activeFollowUpIndex, 1);
+            activeFollowUpIndex = pt.follow_ups.length > 0 ? pt.follow_ups.length - 1 : null;
+
+            saveConsultationData();
+            renderFollowUpSidebar();
+            loadFollowUpForm();
+        }
+
+        function loadFollowUpForm() {
+            if (!activePatientId) return;
+            const pt = db.find(p => p.id === activePatientId);
+            if (!pt) return;
+
+            const contentDiv = document.getElementById("followup_form_content");
+            const emptyDiv = document.getElementById("followup_empty_state");
+
+            if (activeFollowUpIndex === null || !pt.follow_ups || pt.follow_ups.length === 0) {
+                contentDiv.style.display = "none";
+                emptyDiv.style.display = "block";
+                return;
+            }
+
+            contentDiv.style.display = "block";
+            emptyDiv.style.display = "none";
+
+            const fu = pt.follow_ups[activeFollowUpIndex];
+            
+            document.getElementById("fu_date").value = fu.date || new Date().toISOString().slice(0, 10);
+            document.getElementById("fu_time_since_tx").value = fu.time_since_tx || "";
+            document.getElementById("fu_ecog").value = fu.ecog || "0";
+            document.getElementById("fu_symptoms").value = fu.symptoms || "";
+            document.getElementById("fu_exam_general").value = fu.exam_general || "";
+            document.getElementById("fu_exam_nodes").value = fu.exam_nodes || "";
+            document.getElementById("fu_exam_local").value = fu.exam_local || "";
+            document.getElementById("fu_exam_systemic").value = fu.exam_systemic || "";
+
+            // Checkboxes
+            document.getElementById("fu_status_ned").checked = !!fu.status_ned;
+            document.getElementById("fu_status_cr").checked = !!fu.status_cr;
+            document.getElementById("fu_status_pr").checked = !!fu.status_pr;
+            document.getElementById("fu_status_sd").checked = !!fu.status_sd;
+            document.getElementById("fu_status_pd").checked = !!fu.status_pd;
+            document.getElementById("fu_status_rec").checked = !!fu.status_rec;
+
+            document.getElementById("fu_assessment").value = fu.assessment || "";
+            document.getElementById("fu_plan_invest").value = fu.plan_invest || "";
+            document.getElementById("fu_plan_tx").value = fu.plan_tx || "";
+            document.getElementById("fu_plan_supportive").value = fu.plan_supportive || "";
+            document.getElementById("fu_next_visit").value = fu.next_visit || "";
+
+            loadToxicityRows(fu.toxicities || []);
+            loadInvestigationRows(fu.investigations || []);
+            generateHMISFollowUpNote();
+        }
+
+        // -------------------------------------------------------------
+        // CHEMOTHERAPY LOG RECURRING ENGINE
+        // -------------------------------------------------------------
+        function renderChemoSidebar() {
+            if (!activePatientId) return;
+            const pt = db.find(p => p.id === activePatientId);
+            if (!pt) return;
+
+            const container = document.getElementById("chemo_records_list");
+            if (!container) return;
+            container.innerHTML = "";
+
+            if (!pt.chemos || pt.chemos.length === 0) {
+                container.innerHTML = `<div style="font-size:0.75rem; color:var(--text-muted); text-align:center; padding:10px;">No chemo cycles logged. Click + Add Cycle.</div>`;
+                return;
+            }
+
+            pt.chemos.forEach((ch, idx) => {
+                const item = document.createElement("div");
+                item.className = `record-list-item ${activeChemoIndex === idx ? "active" : ""}`;
+                item.onclick = () => {
+                    activeChemoIndex = idx;
+                    renderChemoSidebar();
+                    loadChemoForm();
+                };
+                item.innerHTML = `
+                    <div style="display:flex; flex-direction:column; gap:2px;">
+                        <span style="font-weight:700; font-size:0.75rem;">Cycle #${ch.cycle_num || idx + 1}</span>
+                        <span style="font-size:0.65rem; color:var(--text-secondary);">${ch.regimen || "No Regimen"} (D${ch.day_num || 1})</span>
+                    </div>
+                `;
+                container.appendChild(item);
+            });
+        }
+
+        function addNewChemoRecord() {
+            if (!activePatientId) return;
+            const pt = db.find(p => p.id === activePatientId);
+            if (!pt) return;
+
+            if (!pt.chemos) pt.chemos = [];
+
+            const nextCycleNum = pt.chemos.length + 1;
+            const newChemo = {
+                date: new Date().toISOString().slice(0, 10),
+                regimen: "",
+                intent: "Adjuvant / Concurrent",
+                cycle_num: nextCycleNum,
+                day_num: 1,
+                interval: 21,
+                prev_date: "",
+                int_new_sym: false,
+                int_hosp: false,
+                int_toxicity: false,
+                interval_notes: "",
+                tox_nausea_pres: false,
+                tox_nausea_gr: "Grade 0",
+                tox_diarrhea_pres: false,
+                tox_diarrhea_gr: "Grade 0",
+                tox_mucositis_pres: false,
+                tox_mucositis_gr: "Grade 0",
+                tox_fatigue_pres: false,
+                tox_fatigue_gr: "Grade 0",
+                tox_neuro_pres: false,
+                tox_neuro_gr: "Grade 0",
+                tox_fever_pres: false,
+                tox_fever_gr: "Grade 0",
+                tox_skin_pres: false,
+                tox_skin_gr: "Grade 0",
+                tox_other_name: "",
+                tox_other_pres: false,
+                tox_other_gr: "Grade 0",
+                vitals: "120/80 mmHg, 76 bpm, 98.6 F, 99%",
+                exam_general: "Afebrile, hemodynamically stable, ECOG 1",
+                exam_focused: "Bilateral chest clear. Normal heart sounds. No active surgical site infection.",
+                lab_hb: pt.lab_hb || "",
+                ch_lab_tlc: `${pt.lab_wbc || ""} / ${pt.lab_anc || ""}`,
+                lab_plt: pt.lab_plt || "",
+                lab_cr: pt.lab_cr || "",
+                lab_bilirubin: "",
+                lab_trans: "",
+                fit_yes: true,
+                fit_proceed: true,
+                fit_mod: false,
+                fit_defer: false,
+                fit_eval: false,
+                fit_reason: "",
+                orders_protocol: "Yes",
+                plan_supportive: "IV fluids, Injection Aprepitant + Ondansetron, Dexamethasone",
+                instructions: "Infuse Paclitaxel over 3 hours. Monitor vitals every 30 mins during infusion."
+            };
+
+            pt.chemos.push(newChemo);
+            activeChemoIndex = pt.chemos.length - 1;
+
+            saveConsultationData();
+            renderChemoSidebar();
+            loadChemoForm();
+        }
+
+        function deleteActiveChemoRecord() {
+            if (!activePatientId || activeChemoIndex === null) return;
+            if (!confirm("Are you sure you want to delete this chemotherapy cycle visit record?")) return;
+
+            const pt = db.find(p => p.id === activePatientId);
+            if (!pt) return;
+
+            pt.chemos.splice(activeChemoIndex, 1);
+            activeChemoIndex = pt.chemos.length > 0 ? pt.chemos.length - 1 : null;
+
+            saveConsultationData();
+            renderChemoSidebar();
+            loadChemoForm();
+        }
+
+        function loadChemoForm() {
+            if (!activePatientId) return;
+            const pt = db.find(p => p.id === activePatientId);
+            if (!pt) return;
+
+            const contentDiv = document.getElementById("chemo_form_content");
+            const emptyDiv = document.getElementById("chemo_empty_state");
+
+            if (activeChemoIndex === null || !pt.chemos || pt.chemos.length === 0) {
+                contentDiv.style.display = "none";
+                emptyDiv.style.display = "block";
+                return;
+            }
+
+            contentDiv.style.display = "block";
+            emptyDiv.style.display = "none";
+
+            const ch = pt.chemos[activeChemoIndex];
+
+            document.getElementById("ch_date").value = ch.date || new Date().toISOString().slice(0, 10);
+            document.getElementById("ch_regimen").value = ch.regimen || "";
+            document.getElementById("ch_intent").value = ch.intent || "";
+            document.getElementById("ch_cycle_num").value = ch.cycle_num || "";
+            document.getElementById("ch_day_num").value = ch.day_num || "1";
+            document.getElementById("ch_interval").value = ch.interval || "";
+            document.getElementById("ch_prev_date").value = ch.prev_date || "";
+
+            // Checkboxes & notes
+            document.getElementById("ch_int_new_sym").checked = !!ch.int_new_sym;
+            document.getElementById("ch_int_hosp").checked = !!ch.int_hosp;
+            document.getElementById("ch_int_toxicity").checked = !!ch.int_toxicity;
+            document.getElementById("ch_interval_notes").value = ch.interval_notes || "";
+
+            // Toxicities
+            document.getElementById("ch_tox_nausea_pres").checked = !!ch.tox_nausea_pres;
+            document.getElementById("ch_tox_nausea_gr").value = ch.tox_nausea_gr || "Grade 0";
+            document.getElementById("ch_tox_diarrhea_pres").checked = !!ch.tox_diarrhea_pres;
+            document.getElementById("ch_tox_diarrhea_gr").value = ch.tox_diarrhea_gr || "Grade 0";
+            document.getElementById("ch_tox_mucositis_pres").checked = !!ch.tox_mucositis_pres;
+            document.getElementById("ch_tox_mucositis_gr").value = ch.tox_mucositis_gr || "Grade 0";
+            document.getElementById("ch_tox_fatigue_pres").checked = !!ch.tox_fatigue_pres;
+            document.getElementById("ch_tox_fatigue_gr").value = ch.tox_fatigue_gr || "Grade 0";
+            document.getElementById("ch_tox_neuro_pres").checked = !!ch.tox_neuro_pres;
+            document.getElementById("ch_tox_neuro_gr").value = ch.tox_neuro_gr || "Grade 0";
+            document.getElementById("ch_tox_fever_pres").checked = !!ch.tox_fever_pres;
+            document.getElementById("ch_tox_fever_gr").value = ch.tox_fever_gr || "Grade 0";
+            document.getElementById("ch_tox_skin_pres").checked = !!ch.tox_skin_pres;
+            document.getElementById("ch_tox_skin_gr").value = ch.tox_skin_gr || "Grade 0";
+            document.getElementById("ch_tox_other_name").value = ch.tox_other_name || "";
+            document.getElementById("ch_tox_other_pres").checked = !!ch.tox_other_pres;
+            document.getElementById("ch_tox_other_gr").value = ch.tox_other_gr || "Grade 0";
+
+            // Exam & vitals
+            document.getElementById("ch_vitals").value = ch.vitals || "";
+            document.getElementById("ch_exam_general").value = ch.exam_general || "";
+            document.getElementById("ch_exam_focused").value = ch.exam_focused || "";
+
+            // Labs
+            document.getElementById("ch_lab_hb").value = ch.lab_hb || "";
+            document.getElementById("ch_lab_tlc").value = ch.lab_tlc || ch.ch_lab_tlc || "";
+            document.getElementById("ch_lab_plt").value = ch.lab_plt || "";
+            document.getElementById("ch_lab_cr").value = ch.lab_cr || "";
+            document.getElementById("ch_lab_bilirubin").value = ch.lab_bilirubin || "";
+            document.getElementById("ch_lab_trans").value = ch.lab_trans || "";
+
+            // Fitness
+            document.getElementById("ch_fit_yes").checked = !!ch.fit_yes;
+            document.getElementById("ch_fit_proceed").checked = !!ch.fit_proceed;
+            document.getElementById("ch_fit_mod").checked = !!ch.fit_mod;
+            document.getElementById("ch_fit_defer").checked = !!ch.fit_defer;
+            document.getElementById("ch_fit_eval").checked = !!ch.fit_eval;
+            document.getElementById("ch_fit_reason").value = ch.fit_reason || "";
+
+            document.getElementById("ch_orders_protocol").value = ch.orders_protocol || "Yes";
+            document.getElementById("ch_plan_supportive").value = ch.plan_supportive || "";
+            document.getElementById("ch_instructions").value = ch.instructions || "";
+
+            generateHMISChemoNote();
+        }
+
+        // -------------------------------------------------------------
+        // CLINICAL NOTE GENERATORS
+        // -------------------------------------------------------------
+        function generateHMISOPDNote() {
+            if (!activePatientId) return;
+            const pt = db.find(p => p.id === activePatientId);
+            if (!pt) return;
+            const opd = pt.opd_consult || {};
+            
+            let note = `=== RADIATION ONCOLOGY OPD CONSULTATION ===\n`;
+            note += `Date: ${opd.consult_date || ""}\n`;
+            note += `Patient Name: ${pt.name} | Age/Sex: ${pt.age}/${pt.gender} | UHID: ${pt.cr}\n`;
+            note += `Consultant: ${opd.consultant || "Not specified"}\n`;
+            note += `Referring Department: ${opd.referring_dept || "Not specified"}\n\n`;
+            note += `DIAGNOSIS / REFERRAL REASON:\n${opd.diag_reason || ""}\n\n`;
+            
+            note += `CLINICAL HISTORY:\n`;
+            note += `- Presenting Symptoms: ${opd.symptoms || ""} (Duration: ${opd.duration || ""})\n`;
+            note += `- Comorbidities: ${opd.comorbidities || ""}\n`;
+            note += `- ECOG Performance Status: ECOG ${opd.ecog || "0"}\n\n`;
+            
+            if (opd.milestones && opd.milestones.length > 0) {
+                note += `CHRONOLOGICAL HISTORY TIMELINE:\n`;
+                opd.milestones.forEach(m => {
+                    if (m.date || m.event) {
+                        note += `* [${m.date}] ${m.event} -> ${m.detail}\n`;
+                    }
+                });
+                note += `\n`;
+            }
+            
+            note += `DIAGNOSTIC WORKUP:\n`;
+            note += `- Imaging: ${opd.imaging_modality || ""} -> Findings: ${opd.imaging_findings || ""}\n`;
+            note += `- Endoscopy/Procedures: ${opd.endoscopy || ""}\n`;
+            note += `- Tumor Markers / Labs: ${opd.labs || ""}\n\n`;
+            
+            note += `PATHOLOGY (BIOPSY):\n`;
+            note += `- Site: ${opd.biopsy_site || ""}\n`;
+            note += `- Histology: ${opd.biopsy_diag || ""} (Grade: ${opd.biopsy_grade || ""})\n`;
+            note += `- IHC/Molecular Profile: ${opd.biopsy_ihc || ""}\n\n`;
+            
+            note += `CLINICAL EXAMINATION:\n`;
+            note += `- General Condition: ${opd.exam_general || ""}\n`;
+            note += `- Palpable Nodes: ${opd.exam_nodes || ""}\n`;
+            note += `- Site Local Exam: ${opd.exam_local || ""}\n`;
+            note += `- Systemic Exam: ${opd.exam_systemic || ""}\n\n`;
+            
+            note += `PROVISIONAL DIAGNOSIS & STAGING:\n`;
+            note += `- Staging System: ${opd.stage_edition || ""}\n`;
+            note += `- Provisional Stage: ${opd.stage_prov || ""}\n\n`;
+            
+            note += `PROVISIONAL MANAGEMENT PLAN:\n`;
+            const plans = [];
+            if (opd.plan_def) plans.push("Definitive RT");
+            if (opd.plan_neo) plans.push("Neoadjuvant Therapy");
+            if (opd.plan_adj) plans.push("Adjuvant RT");
+            if (opd.plan_ccrt) plans.push("Concurrent CCRT");
+            if (opd.plan_pall) plans.push("Palliative Care");
+            if (opd.plan_surv) plans.push("Observation/Surveillance");
+            if (opd.plan_mdt) plans.push("Tumor Board (MDT)");
+            note += `- Selected Modality: ${plans.join(", ") || "None selected"}\n`;
+            note += `- Radiotherapy Plan: Intent: ${opd.rt_intent || ""}, Target: ${opd.rt_target || ""}\n`;
+            note += `- Systemic Therapy Plan: ${opd.chemo_plan || "None"}\n`;
+            note += `- Reassessment / Follow-up: ${opd.followup_plan || ""}\n`;
+            
+            document.getElementById("opd_hmis_textarea").value = note;
+        }
+
+        function generateHMISFollowUpNote() {
+            if (!activePatientId || activeFollowUpIndex === null) return;
+            const pt = db.find(p => p.id === activePatientId);
+            if (!pt) return;
+            const fu = pt.follow_ups[activeFollowUpIndex];
+            if (!fu) return;
+
+            let note = `=== RADIATION ONCOLOGY FOLLOW-UP VISIT ===\n`;
+            note += `Date: ${fu.date || ""}\n`;
+            note += `Patient Name: ${pt.name} | Age/Sex: ${pt.age}/${pt.gender} | UHID: ${pt.cr}\n`;
+            note += `Primary Diagnosis: ${pt.site} | Stage: ${pt.stage_t || 'Tx'}${pt.stage_n || 'Nx'}${pt.stage_m || 'M0'}\n\n`;
+            
+            note += `CURRENT STATUS:\n`;
+            note += `- Time Since RT Completion: ${fu.time_since_tx || ""}\n`;
+            note += `- ECOG Performance Status: ECOG ${fu.ecog || "0"}\n`;
+            note += `- Current Symptoms / Complaints: ${fu.symptoms || "None"}\n\n`;
+            
+            if (fu.toxicities && fu.toxicities.length > 0) {
+                note += `TREATMENT-RELATED TOXICITY (CTCAE):\n`;
+                fu.toxicities.forEach(t => {
+                    if (t.site) {
+                        note += `* [${t.type}] ${t.site}: ${t.grade}\n`;
+                    }
+                });
+                note += `\n`;
+            }
+            
+            note += `CLINICAL EXAMINATION:\n`;
+            note += `- General Condition: ${fu.exam_general || ""}\n`;
+            note += `- Lymph Nodes: ${fu.exam_nodes || ""}\n`;
+            note += `- Site Specific Local Examination: ${fu.exam_local || ""}\n`;
+            note += `- Systemic Findings: ${fu.exam_systemic || ""}\n\n`;
+            
+            if (fu.investigations && fu.investigations.length > 0) {
+                note += `SURVEILLANCE / REASSESSMENT INVESTIGATIONS:\n`;
+                fu.investigations.forEach(i => {
+                    if (i.modality) {
+                        note += `* [${i.date}] ${i.modality}: ${i.result}\n`;
+                    }
+                });
+                note += `\n`;
+            }
+            
+            note += `DISEASE STATUS:\n`;
+            const statuses = [];
+            if (fu.status_ned) statuses.push("No Evidence of Disease (NED)");
+            if (fu.status_cr) statuses.push("Complete Response (CR)");
+            if (fu.status_pr) statuses.push("Partial Response (PR)");
+            if (fu.status_sd) statuses.push("Stable Disease (SD)");
+            if (fu.status_pd) statuses.push("Progressive Disease (PD)");
+            if (fu.status_rec) statuses.push("Disease Recurrence");
+            note += `- Response: ${statuses.join(", ") || "Not assessed"}\n\n`;
+            
+            note += `CLINICAL ASSESSMENT SUMMARY:\n${fu.assessment || ""}\n\n`;
+            
+            note += `PLAN:\n`;
+            note += `- Further Investigations: ${fu.plan_invest || "None"}\n`;
+            note += `- Intervention/Treatment: ${fu.plan_tx || "None"}\n`;
+            note += `- Supportive Care: ${fu.plan_supportive || "None"}\n`;
+            note += `- Next Follow-up Visit Date: ${fu.next_visit || "Not scheduled"}\n`;
+            
+            document.getElementById("fu_hmis_textarea").value = note;
+        }
+
+        function generateHMISChemoNote() {
+            if (!activePatientId || activeChemoIndex === null) return;
+            const pt = db.find(p => p.id === activePatientId);
+            if (!pt) return;
+            const ch = pt.chemos[activeChemoIndex];
+            if (!ch) return;
+
+            let note = `=== CHEMOTHERAPY VISIT & ADMISSION NOTE ===\n`;
+            note += `Date: ${ch.date || ""}\n`;
+            note += `Patient Name: ${pt.name} | Age/Sex: ${pt.age}/${pt.gender} | UHID: ${pt.cr}\n`;
+            note += `Primary Diagnosis: ${pt.site} | Stage: ${pt.stage_t || 'Tx'}${pt.stage_n || 'Nx'}${pt.stage_m || 'M0'}\n\n`;
+            
+            note += `SYSTEMIC THERAPY CYCLE PLAN:\n`;
+            note += `- Regimen: ${ch.regimen || ""}\n`;
+            note += `- Intent: ${ch.intent || ""}\n`;
+            note += `- Current Cycle: Cycle ${ch.cycle_num || ""} Day ${ch.day_num || ""}\n`;
+            note += `- Planned Cycle Interval: ${ch.interval || ""} days\n`;
+            note += `- Date of Previous Cycle: ${ch.prev_date || "None"}\n\n`;
+            
+            note += `INTERVAL HISTORY:\n`;
+            const checkpoints = [];
+            if (ch.int_new_sym) checkpoints.push("New symptoms reported");
+            if (ch.int_hosp) checkpoints.push("Hospitalisation/infection reported");
+            if (ch.int_toxicity) checkpoints.push("Significant interval toxicity noted");
+            note += `- Checkpoints: ${checkpoints.join(", ") || "Uneventful interval"}\n`;
+            note += `- Notes: ${ch.interval_notes || ""}\n\n`;
+            
+            note += `TOXICITY ASSESSMENT (CTCAE):\n`;
+            const toxList = [];
+            if (ch.tox_nausea_pres) toxList.push(`Nausea/Vomiting: ${ch.tox_nausea_gr}`);
+            if (ch.tox_diarrhea_pres) toxList.push(`Diarrhoea/Constipation: ${ch.tox_diarrhea_gr}`);
+            if (ch.tox_mucositis_pres) toxList.push(`Mucositis (Oral): ${ch.tox_mucositis_gr}`);
+            if (ch.tox_fatigue_pres) toxList.push(`Fatigue/Weakness: ${ch.tox_fatigue_gr}`);
+            if (ch.tox_neuro_pres) toxList.push(`Peripheral Neuropathy: ${ch.tox_neuro_gr}`);
+            if (ch.tox_fever_pres) toxList.push(`Fever/Infection: ${ch.tox_fever_gr}`);
+            if (ch.tox_skin_pres) toxList.push(`Skin Toxicity: ${ch.tox_skin_gr}`);
+            if (ch.tox_other_pres && ch.tox_other_name) toxList.push(`${ch.tox_other_name}: ${ch.tox_other_gr}`);
+            note += toxList.length > 0 ? toxList.map(t => `* ${t}`).join("\n") + "\n\n" : "- No toxicities reported\n\n";
+            
+            note += `EXAMINATION & VITALS:\n`;
+            note += `- Vitals: ${ch.vitals || ""}\n`;
+            note += `- General Condition: ${ch.exam_general || ""}\n`;
+            note += `- Focused Examination: ${ch.exam_focused || ""}\n\n`;
+            
+            note += `PRE-CHEMOTHERAPY BLOOD WORKUP:\n`;
+            note += `- Hb: ${ch.lab_hb || ""} g/dl | TLC/ANC: ${ch.lab_tlc || ""} | Platelets: ${ch.lab_plt || ""} lakhs\n`;
+            note += `- Creatinine: ${ch.lab_cr || ""} mg/dl | Bilirubin: ${ch.lab_bilirubin || ""} mg/dl\n`;
+            note += `- AST/ALT: ${ch.lab_trans || ""}\n\n`;
+            
+            note += `FITNESS STATUS EVALUATION:\n`;
+            const fitnesses = [];
+            if (ch.fit_yes) fitnesses.push("Fit for planned cycle");
+            if (ch.fit_proceed) fitnesses.push("Proceed without modification");
+            if (ch.fit_mod) fitnesses.push("Dose modification required");
+            if (ch.fit_defer) fitnesses.push("Cycle deferred");
+            if (ch.fit_eval) fitnesses.push("Further evaluation required");
+            note += `- Decision: ${fitnesses.join(", ") || "Pending"}\n`;
+            if (ch.fit_reason) note += `- Reason: ${ch.fit_reason}\n`;
+            note += `\n`;
+            
+            note += `PLAN & ORDERS:\n`;
+            note += `- Orders Verified: ${ch.orders_protocol || "No"}\n`;
+            note += `- Supportive Medications: ${ch.plan_supportive || "None"}\n`;
+            note += `- Special Instructions: ${ch.instructions || "None"}\n`;
+            
+            document.getElementById("ch_hmis_textarea").value = note;
+            
+            // Auto-generate Day-Care Admission note paragraph
+            generateChemoAdmissionNote(ch, pt);
+        }
+
+        function generateChemoAdmissionNote(ch, pt) {
+            const container = document.getElementById("chemo_admission_paragraph");
+            if (!container) return;
+            
+            const diagnosis = pt.site + " (" + (pt.stage_t || "Tx") + (pt.stage_n || "Nx") + (pt.stage_m || "M0") + ")";
+            const regimen = ch.regimen || "__________";
+            const intent = ch.intent || "__________";
+            const cycle = ch.cycle_num || "___";
+            const day = ch.day_num || "1";
+            
+            // Collect toxicities text
+            const toxList = [];
+            if (ch.tox_nausea_pres) toxList.push(`Nausea (${ch.tox_nausea_gr})`);
+            if (ch.tox_diarrhea_pres) toxList.push(`Diarrhoea (${ch.tox_diarrhea_gr})`);
+            if (ch.tox_mucositis_pres) toxList.push(`Mucositis (${ch.tox_mucositis_gr})`);
+            if (ch.tox_fatigue_pres) toxList.push(`Fatigue (${ch.tox_fatigue_gr})`);
+            if (ch.tox_neuro_pres) toxList.push(`Neuropathy (${ch.tox_neuro_gr})`);
+            if (ch.tox_fever_pres) toxList.push(`Fever (${ch.tox_fever_gr})`);
+            if (ch.tox_skin_pres) toxList.push(`Skin toxicity (${ch.tox_skin_gr})`);
+            const toxText = toxList.length > 0 ? toxList.join(", ") : "None";
+            
+            const ecog = ch.exam_general.includes("ECOG") ? ch.exam_general : "ECOG 1";
+            const exam = ch.exam_focused || "Within normal limits";
+            
+            const labsText = `Hb: ${ch.lab_hb || "___"} g/dl, TLC/ANC: ${ch.lab_tlc || "___"}, Plt: ${ch.lab_plt || "___"}L, Cr: ${ch.lab_cr || "___"} mg/dl`;
+            
+            const admissionText = `Patient with diagnosis of <strong>${diagnosis}</strong>, planned for <strong>${regimen}</strong> chemotherapy/systemic therapy with <strong>${intent}</strong> intent, is admitted to Day Care/Ward for Cycle <strong>${cycle}</strong> Day <strong>${day}</strong> of <strong>${regimen}</strong> regimen. Interval history reviewed. Current symptoms/toxicities: <strong>${toxText}</strong>. ECOG PS: <strong>${ecog}</strong>. Clinical examination: <strong>${exam}</strong>. Pre-treatment blood investigations reviewed and are acceptable / show <strong>${labsText}</strong>. Patient is fit to receive the planned cycle of treatment.`;
+            
+            container.innerHTML = admissionText;
+        }
+
+        // -------------------------------------------------------------
+        // CLIPBOARD COPY HANDLERS
+        // -------------------------------------------------------------
+        function copyOPDNoteToClipboard() {
+            const txt = document.getElementById("opd_hmis_textarea");
+            if (txt) {
+                txt.select();
+                document.execCommand("copy");
+                alert("OPD Consultation note copied to clipboard!");
+            }
+        }
+
+        function copyFollowUpNoteToClipboard() {
+            const txt = document.getElementById("fu_hmis_textarea");
+            if (txt) {
+                txt.select();
+                document.execCommand("copy");
+                alert("Follow-up Consultation note copied to clipboard!");
+            }
+        }
+
+        function copyChemoNoteToClipboard() {
+            const txt = document.getElementById("ch_hmis_textarea");
+            if (txt) {
+                txt.select();
+                document.execCommand("copy");
+                alert("Chemotherapy cycle note copied to clipboard!");
+            }
+        }
+
+        function copyChemoAdmissionNoteToClipboard() {
+            const container = document.getElementById("chemo_admission_paragraph");
+            if (container) {
+                // Copy plain text content (excluding HTML tags)
+                const temp = document.createElement("textarea");
+                temp.value = container.innerText;
+                document.body.appendChild(temp);
+                temp.select();
+                document.execCommand("copy");
+                document.body.removeChild(temp);
+                alert("Day-Care Admission Note copied to clipboard!");
+            }
+        }
+
         // Register Service Worker for PWA Add-to-Home-Screen Support
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
@@ -3892,8 +5634,12 @@ V20Gy (%): 18.20
             <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
             <span>Register</span>
         </button>
+        <button onclick="switchTab('tab-consultations')">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/></svg>
+            <span>Consults</span>
+        </button>
         <button onclick="switchTab('tab-settings')">
-            <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M19.43 12.98c.04-.32.07-.64.07-.98s-.03-.66-.07-.98l2.11-1.65c.19-.15.24-.42.12-.64l-2-3.46c-.12-.22-.39-.3-.61-.22l-2.49 1c-.52-.4-1.08-.73-1.69-.98l-.38-2.65C14.46 2.18 14.25 2 14 2h-4c-.25 0-.46.18-.49.42l-.38 2.65c-.61.25-1.17.59-1.69.98l-2.49-1c-.23-.09-.49 0-.61.22l-2 3.46c-.13.22-.07.49.12.64l2.11 1.65c-.04.32-.07.65-.07.98s.03.66.07.98l-2.11 1.65c-.19.15-.24.42-.12.64l2 3.46c.12.22.39.3.61.22l2.49-1c.52.4 1.08.73 1.69.98l.38 2.65c.03.24.24.42.49.42h4c.25 0 .46-.18.49-.42l.38-2.65c.61-.25 1.17-.59 1.69-.98l2.49 1c.23.09.49 0 .61-.22l2-3.46c.12-.22.07-.49-.12-.64l-2.11-1.65zM12 15.5c-1.93 0-3.5-1.57-3.5-3.5s1.57-3.5 3.5-3.5 3.5 1.57 3.5 3.5-1.57 3.5-3.5 3.5z"/></svg>
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M19.43 12.98c.04-.32.07-.64.07-.98s-.03-.66-.07-.98l2.11-1.65c.19-.15.24-.42.12-.64l-2-3.46c-.12-.22-.39-.3-.61-.22l-2.49 1c-.52-.4-1.08-.73-1.69-.98l-.38-2.65C14.46 2.18 14.25 2 14 2h-4c-.25 0-.46.18-.49.42l-.38 2.65c-.61.25-1.17.59-1.69.98l-2.49-1c-.23-.09-.49 0-.61.22l-2 3.46c-.13.22-.07.49.12.64l2.11 1.65c-.04.32-.07.65-.07.98s.03.66.07.98l-2.11 1.65c-.19.15-.24.42-.12.64l2 3.46c.12.22.39.3.61.22l2.49-1c.52.4 1.08.73 1.69.98l.38 2.65c.03.24.24.42.49.42h4c.25 0 .46-.18.49-.42l.38-2.65c.61-.25 1.17-.59 1.69-.98l2.49 1c.23.09.49 0 .61-.22l2-3.46c.12-.22.07-.49-.12-.64l-2-3.46c.12-.22.07-.49-.12-.64l-2.11-1.65zM12 15.5c-1.93 0-3.5-1.57-3.5-3.5s1.57-3.5 3.5-3.5 3.5 1.57 3.5 3.5-1.57 3.5-3.5 3.5z"/></svg>
             <span>Settings</span>
         </button>
     </div>
