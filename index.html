@@ -5679,8 +5679,42 @@ V20Gy (%): 18.20
 
                 generateHMISChemoNote();
             }
-
             saveAndSyncPatient(pt);
+        }
+
+        // Load active patient consultation form values
+        function loadConsultationData() {
+            if (!activePatientId) return;
+            const pt = db.find(p => p.id === activePatientId);
+            if (!pt) return;
+
+            // Initialize categories arrays if missing
+            if (!pt.follow_ups) pt.follow_ups = [];
+            if (!pt.chemos) pt.chemos = [];
+            if (!pt.opd_consult) pt.opd_consult = {};
+
+            // Render categories and update forms
+            const selector = document.getElementById("consult_category_selector");
+            if (!selector) return;
+            const cat = selector.value;
+
+            if (cat === "opd-new") {
+                loadOPDConsultForm();
+            } else if (cat === "followup") {
+                // Ensure activeFollowUpIndex is valid
+                if (activeFollowUpIndex === null || activeFollowUpIndex >= pt.follow_ups.length) {
+                    activeFollowUpIndex = pt.follow_ups.length > 0 ? pt.follow_ups.length - 1 : null;
+                }
+                renderFollowUpSidebar();
+                loadFollowUpForm();
+            } else if (cat === "chemo") {
+                // Ensure activeChemoIndex is valid
+                if (activeChemoIndex === null || activeChemoIndex >= pt.chemos.length) {
+                    activeChemoIndex = pt.chemos.length > 0 ? pt.chemos.length - 1 : null;
+                }
+                renderChemoSidebar();
+                loadChemoForm();
+            }
         }
 
         // -------------------------------------------------------------
