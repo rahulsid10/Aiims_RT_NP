@@ -993,6 +993,7 @@
             .mobile-bottom-nav button svg {
                 fill: currentColor;
             }
+            .mobile-bottom-nav button.active,
             .mobile-bottom-nav button:active,
             .mobile-bottom-nav button:hover {
                 color: var(--accent-teal);
@@ -3315,15 +3316,29 @@
         // Switch Tabs
         function switchTab(tabId) {
             toggleSidebarDrawer(false);
+            
+            // Clear active highlighting from all tab elements (desktop and mobile)
             document.querySelectorAll(".tab-btn").forEach(btn => btn.classList.remove("active"));
+            document.querySelectorAll(".mobile-bottom-nav button").forEach(btn => btn.classList.remove("active"));
             document.querySelectorAll(".tab-content").forEach(content => content.classList.remove("active"));
 
-            // Set active button (only if it exists in the top tab bar)
-            const eventBtn = Array.from(document.querySelectorAll(".tab-btn")).find(btn => btn.getAttribute("onclick").includes(tabId));
+            // Set active button for desktop tab list
+            const eventBtn = Array.from(document.querySelectorAll(".tab-btn")).find(btn => {
+                const onclickVal = btn.getAttribute("onclick") || "";
+                return onclickVal.includes(tabId);
+            });
             if (eventBtn) eventBtn.classList.add("active");
 
+            // Set active button for mobile bottom nav bar
+            const mobileBtn = Array.from(document.querySelectorAll(".mobile-bottom-nav button")).find(btn => {
+                const onclickVal = btn.getAttribute("onclick") || "";
+                return onclickVal.includes(tabId);
+            });
+            if (mobileBtn) mobileBtn.classList.add("active");
+
             // Set active panel
-            document.getElementById(tabId).classList.add("active");
+            const panel = document.getElementById(tabId);
+            if (panel) panel.classList.add("active");
 
             // If switching to Settings tab, hide the "No Patient" empty state overlay
             if (tabId === "tab-settings") {
