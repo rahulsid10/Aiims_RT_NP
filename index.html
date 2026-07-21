@@ -1218,6 +1218,69 @@
                 grid-template-columns: 1fr !important;
             }
         }
+
+        /* Exclusive Print Dossier Styling */
+        #printDossierHeader {
+            display: none;
+        }
+
+        .print-patient-info {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-top: 12px;
+            padding: 10px;
+            background: #f8fafc;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            font-size: 0.85rem;
+        }
+
+        .print-patient-info div span {
+            font-weight: 700;
+            color: var(--text-secondary);
+        }
+
+        @media print {
+            body {
+                background: #ffffff !important;
+                color: #000000 !important;
+            }
+            .sidebar, .tabs-nav, .app-header, .btn, .stage-save-bar, .mobile-bottom-nav {
+                display: none !important;
+            }
+            .main-content {
+                height: auto !important;
+                overflow: visible !important;
+            }
+            .work-area {
+                height: auto !important;
+                overflow: visible !important;
+                padding: 0 !important;
+                background: none !important;
+            }
+            #printDossierHeader {
+                display: block !important;
+                margin-bottom: 24px;
+                border-bottom: 2px solid #0d9488;
+                padding-bottom: 12px;
+            }
+            .glass-card {
+                background: none !important;
+                border: none !important;
+                box-shadow: none !important;
+                padding: 0 !important;
+                margin-bottom: 30px !important;
+                page-break-inside: avoid;
+            }
+            .tab-content {
+                display: block !important;
+            }
+            /* Show only active stage on printout */
+            .tab-content:not(.active) {
+                display: none !important;
+            }
+        }
     </style>
 </head>
 <body>
@@ -1276,6 +1339,7 @@
                     <h2>No Patient Selected</h2>
                 </div>
             </div>
+            
             <div class="header-actions">
                 <!-- Hamburger menu toggle button for Mobile drawer -->
                 <button class="btn btn-secondary" id="btnSidebarToggle" style="display:none;" onclick="toggleSidebarDrawer(true)">
