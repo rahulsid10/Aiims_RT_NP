@@ -427,11 +427,12 @@
             border-bottom-color: var(--accent-teal);
         }
 
-        /* Scrollable Work Area */
         .work-area {
             flex-grow: 1;
             padding: 32px;
             overflow-y: auto;
+            height: calc(100vh - 130px);
+            -webkit-overflow-scrolling: touch;
             background-color: var(--bg-main);
         }
 
@@ -914,7 +915,10 @@
             }
 
             .work-area {
-                padding: 16px;
+                padding: 16px 16px 80px 16px !important;
+                height: calc(100vh - 160px) !important;
+                overflow-y: auto !important;
+                -webkit-overflow-scrolling: touch !important;
             }
 
             .form-grid {
