@@ -5523,6 +5523,166 @@ V20Gy (%): 18.20
             generateHMISChemoNote();
         }
 
+        // Save Active Patient Consultation data to database
+        function saveConsultationData() {
+            if (!activePatientId) return;
+            const pt = db.find(p => p.id === activePatientId);
+            if (!pt) return;
+
+            const selector = document.getElementById("consult_category_selector");
+            if (!selector) return;
+            const cat = selector.value;
+
+            if (cat === "opd-new") {
+                if (!pt.opd_consult) pt.opd_consult = {};
+                const opd = pt.opd_consult;
+                
+                if (document.getElementById("opd_consult_date")) opd.consult_date = document.getElementById("opd_consult_date").value;
+                if (document.getElementById("opd_referring_dept")) opd.referring_dept = document.getElementById("opd_referring_dept").value;
+                if (document.getElementById("opd_consultant")) opd.consultant = document.getElementById("opd_consultant").value;
+                if (document.getElementById("opd_diag_reason")) opd.diag_reason = document.getElementById("opd_diag_reason").value;
+                if (document.getElementById("opd_symptoms")) opd.symptoms = document.getElementById("opd_symptoms").value;
+                if (document.getElementById("opd_duration")) opd.duration = document.getElementById("opd_duration").value;
+                if (document.getElementById("opd_comorbidities")) opd.comorbidities = document.getElementById("opd_comorbidities").value;
+                if (document.getElementById("opd_ecog")) opd.ecog = document.getElementById("opd_ecog").value;
+                if (document.getElementById("opd_imaging_modality")) opd.imaging_modality = document.getElementById("opd_imaging_modality").value;
+                if (document.getElementById("opd_imaging_findings")) opd.imaging_findings = document.getElementById("opd_imaging_findings").value;
+                if (document.getElementById("opd_endoscopy")) opd.endoscopy = document.getElementById("opd_endoscopy").value;
+                if (document.getElementById("opd_labs")) opd.labs = document.getElementById("opd_labs").value;
+                if (document.getElementById("opd_biopsy_site")) opd.biopsy_site = document.getElementById("opd_biopsy_site").value;
+                if (document.getElementById("opd_biopsy_diag")) opd.biopsy_diag = document.getElementById("opd_biopsy_diag").value;
+                if (document.getElementById("opd_biopsy_grade")) opd.biopsy_grade = document.getElementById("opd_biopsy_grade").value;
+                if (document.getElementById("opd_biopsy_ihc")) opd.biopsy_ihc = document.getElementById("opd_biopsy_ihc").value;
+                if (document.getElementById("opd_exam_general")) opd.exam_general = document.getElementById("opd_exam_general").value;
+                if (document.getElementById("opd_exam_nodes")) opd.exam_nodes = document.getElementById("opd_exam_nodes").value;
+                if (document.getElementById("opd_exam_local")) opd.exam_local = document.getElementById("opd_exam_local").value;
+                if (document.getElementById("opd_exam_systemic")) opd.exam_systemic = document.getElementById("opd_exam_systemic").value;
+                if (document.getElementById("opd_stage_edition")) opd.stage_edition = document.getElementById("opd_stage_edition").value;
+                if (document.getElementById("opd_stage_prov")) opd.stage_prov = document.getElementById("opd_stage_prov").value;
+                
+                // Checkboxes
+                if (document.getElementById("opd_plan_def")) opd.plan_def = document.getElementById("opd_plan_def").checked;
+                if (document.getElementById("opd_plan_neo")) opd.plan_neo = document.getElementById("opd_plan_neo").checked;
+                if (document.getElementById("opd_plan_adj")) opd.plan_adj = document.getElementById("opd_plan_adj").checked;
+                if (document.getElementById("opd_plan_ccrt")) opd.plan_ccrt = document.getElementById("opd_plan_ccrt").checked;
+                if (document.getElementById("opd_plan_pall")) opd.plan_pall = document.getElementById("opd_plan_pall").checked;
+                if (document.getElementById("opd_plan_surv")) opd.plan_surv = document.getElementById("opd_plan_surv").checked;
+                if (document.getElementById("opd_plan_mdt")) opd.plan_mdt = document.getElementById("opd_plan_mdt").checked;
+
+                if (document.getElementById("opd_rt_intent")) opd.rt_intent = document.getElementById("opd_rt_intent").value;
+                if (document.getElementById("opd_rt_target")) opd.rt_target = document.getElementById("opd_rt_target").value;
+                if (document.getElementById("opd_chemo_plan")) opd.chemo_plan = document.getElementById("opd_chemo_plan").value;
+                if (document.getElementById("opd_followup_plan")) opd.followup_plan = document.getElementById("opd_followup_plan").value;
+
+                // Timeline Milestones
+                opd.milestones = getTimelineMilestonesData();
+                
+                // Canvas Sketchpad
+                if (sketchpadCanvas) {
+                    opd.canvas_data = sketchpadCanvas.toDataURL();
+                }
+
+                generateHMISOPDNote();
+            } 
+            else if (cat === "followup" && activeFollowUpIndex !== null && pt.follow_ups && pt.follow_ups[activeFollowUpIndex]) {
+                const fu = pt.follow_ups[activeFollowUpIndex];
+                
+                if (document.getElementById("fu_date")) fu.date = document.getElementById("fu_date").value;
+                if (document.getElementById("fu_time_since_tx")) fu.time_since_tx = document.getElementById("fu_time_since_tx").value;
+                if (document.getElementById("fu_ecog")) fu.ecog = document.getElementById("fu_ecog").value;
+                if (document.getElementById("fu_symptoms")) fu.symptoms = document.getElementById("fu_symptoms").value;
+                if (document.getElementById("fu_exam_general")) fu.exam_general = document.getElementById("fu_exam_general").value;
+                if (document.getElementById("fu_exam_nodes")) fu.exam_nodes = document.getElementById("fu_exam_nodes").value;
+                if (document.getElementById("fu_exam_local")) fu.exam_local = document.getElementById("fu_exam_local").value;
+                if (document.getElementById("fu_exam_systemic")) fu.exam_systemic = document.getElementById("fu_exam_systemic").value;
+
+                // Checkboxes
+                if (document.getElementById("fu_status_ned")) fu.status_ned = document.getElementById("fu_status_ned").checked;
+                if (document.getElementById("fu_status_cr")) fu.status_cr = document.getElementById("fu_status_cr").checked;
+                if (document.getElementById("fu_status_pr")) fu.status_pr = document.getElementById("fu_status_pr").checked;
+                if (document.getElementById("fu_status_sd")) fu.status_sd = document.getElementById("fu_status_sd").checked;
+                if (document.getElementById("fu_status_pd")) fu.status_pd = document.getElementById("fu_status_pd").checked;
+                if (document.getElementById("fu_status_rec")) fu.status_rec = document.getElementById("fu_status_rec").checked;
+
+                if (document.getElementById("fu_assessment")) fu.assessment = document.getElementById("fu_assessment").value;
+                if (document.getElementById("fu_plan_invest")) fu.plan_invest = document.getElementById("fu_plan_invest").value;
+                if (document.getElementById("fu_plan_tx")) fu.plan_tx = document.getElementById("fu_plan_tx").value;
+                if (document.getElementById("fu_plan_supportive")) fu.plan_supportive = document.getElementById("fu_plan_supportive").value;
+                if (document.getElementById("fu_next_visit")) fu.next_visit = document.getElementById("fu_next_visit").value;
+
+                // Sub-grids
+                fu.toxicities = getToxicityRowsData();
+                fu.investigations = getInvestigationRowsData();
+
+                generateHMISFollowUpNote();
+            } 
+            else if (cat === "chemo" && activeChemoIndex !== null && pt.chemos && pt.chemos[activeChemoIndex]) {
+                const ch = pt.chemos[activeChemoIndex];
+
+                if (document.getElementById("ch_date")) ch.date = document.getElementById("ch_date").value;
+                if (document.getElementById("ch_regimen")) ch.regimen = document.getElementById("ch_regimen").value;
+                if (document.getElementById("ch_intent")) ch.intent = document.getElementById("ch_intent").value;
+                if (document.getElementById("ch_cycle_num")) ch.cycle_num = parseInt(document.getElementById("ch_cycle_num").value) || "";
+                if (document.getElementById("ch_day_num")) ch.day_num = parseInt(document.getElementById("ch_day_num").value) || 1;
+                if (document.getElementById("ch_interval")) ch.interval = parseInt(document.getElementById("ch_interval").value) || "";
+                if (document.getElementById("ch_prev_date")) ch.prev_date = document.getElementById("ch_prev_date").value;
+
+                // Checkboxes & notes
+                if (document.getElementById("ch_int_new_sym")) ch.int_new_sym = document.getElementById("ch_int_new_sym").checked;
+                if (document.getElementById("ch_int_hosp")) ch.int_hosp = document.getElementById("ch_int_hosp").checked;
+                if (document.getElementById("ch_int_toxicity")) ch.int_toxicity = document.getElementById("ch_int_toxicity").checked;
+                if (document.getElementById("ch_interval_notes")) ch.interval_notes = document.getElementById("ch_interval_notes").value;
+
+                // Toxicities
+                if (document.getElementById("ch_tox_nausea_pres")) ch.tox_nausea_pres = document.getElementById("ch_tox_nausea_pres").checked;
+                if (document.getElementById("ch_tox_nausea_gr")) ch.tox_nausea_gr = document.getElementById("ch_tox_nausea_gr").value;
+                if (document.getElementById("ch_tox_diarrhea_pres")) ch.tox_diarrhea_pres = document.getElementById("ch_tox_diarrhea_pres").checked;
+                if (document.getElementById("ch_tox_diarrhea_gr")) ch.tox_diarrhea_gr = document.getElementById("ch_tox_diarrhea_gr").value;
+                if (document.getElementById("ch_tox_mucositis_pres")) ch.tox_mucositis_pres = document.getElementById("ch_tox_mucositis_pres").checked;
+                if (document.getElementById("ch_tox_mucositis_gr")) ch.tox_mucositis_gr = document.getElementById("ch_tox_mucositis_gr").value;
+                if (document.getElementById("ch_tox_fatigue_pres")) ch.tox_fatigue_pres = document.getElementById("ch_tox_fatigue_pres").checked;
+                if (document.getElementById("ch_tox_fatigue_gr")) ch.tox_fatigue_gr = document.getElementById("ch_tox_fatigue_gr").value;
+                if (document.getElementById("ch_tox_neuro_pres")) ch.tox_neuro_pres = document.getElementById("ch_tox_neuro_pres").checked;
+                if (document.getElementById("ch_tox_neuro_gr")) ch.tox_neuro_gr = document.getElementById("ch_tox_neuro_gr").value;
+                if (document.getElementById("ch_tox_fever_pres")) ch.tox_fever_pres = document.getElementById("ch_tox_fever_pres").checked;
+                if (document.getElementById("ch_tox_fever_gr")) ch.tox_fever_gr = document.getElementById("ch_tox_fever_gr").value;
+                if (document.getElementById("ch_tox_skin_pres")) ch.tox_skin_pres = document.getElementById("ch_tox_skin_pres").checked;
+                if (document.getElementById("ch_tox_skin_gr")) ch.tox_skin_gr = document.getElementById("ch_tox_skin_gr").value;
+                if (document.getElementById("ch_tox_other_name")) ch.tox_other_name = document.getElementById("ch_tox_other_name").value;
+                if (document.getElementById("ch_tox_other_pres")) ch.tox_other_pres = document.getElementById("ch_tox_other_pres").checked;
+                if (document.getElementById("ch_tox_other_gr")) ch.tox_other_gr = document.getElementById("ch_tox_other_gr").value;
+
+                // Exam & vitals
+                if (document.getElementById("ch_vitals")) ch.vitals = document.getElementById("ch_vitals").value;
+                if (document.getElementById("ch_exam_general")) ch.exam_general = document.getElementById("ch_exam_general").value;
+                if (document.getElementById("ch_exam_focused")) ch.exam_focused = document.getElementById("ch_exam_focused").value;
+
+                // Labs
+                if (document.getElementById("ch_lab_hb")) ch.lab_hb = parseFloat(document.getElementById("ch_lab_hb").value) || null;
+                if (document.getElementById("ch_lab_tlc")) ch.lab_tlc = document.getElementById("ch_lab_tlc").value;
+                if (document.getElementById("ch_lab_plt")) ch.lab_plt = parseFloat(document.getElementById("ch_lab_plt").value) || null;
+                if (document.getElementById("ch_lab_cr")) ch.lab_cr = parseFloat(document.getElementById("ch_lab_cr").value) || null;
+                if (document.getElementById("ch_lab_bilirubin")) ch.lab_bilirubin = parseFloat(document.getElementById("ch_lab_bilirubin").value) || null;
+                if (document.getElementById("ch_lab_trans")) ch.lab_trans = document.getElementById("ch_lab_trans").value;
+
+                // Fitness
+                if (document.getElementById("ch_fit_yes")) ch.fit_yes = document.getElementById("ch_fit_yes").checked;
+                if (document.getElementById("ch_fit_proceed")) ch.fit_proceed = document.getElementById("ch_fit_proceed").checked;
+                if (document.getElementById("ch_fit_mod")) ch.fit_mod = document.getElementById("ch_fit_mod").checked;
+                if (document.getElementById("ch_fit_defer")) ch.fit_defer = document.getElementById("ch_fit_defer").checked;
+                if (document.getElementById("ch_fit_eval")) ch.fit_eval = document.getElementById("ch_fit_eval").checked;
+                if (document.getElementById("ch_fit_reason")) ch.fit_reason = document.getElementById("ch_fit_reason").value;
+
+                if (document.getElementById("ch_orders_protocol")) ch.orders_protocol = document.getElementById("ch_orders_protocol").value;
+                if (document.getElementById("ch_plan_supportive")) ch.plan_supportive = document.getElementById("ch_plan_supportive").value;
+                if (document.getElementById("ch_instructions")) ch.instructions = document.getElementById("ch_instructions").value;
+
+                generateHMISChemoNote();
+            }
+
+            saveAndSyncPatient(pt);
+        }
+
         // -------------------------------------------------------------
         // CLINICAL NOTE GENERATORS
         // -------------------------------------------------------------
